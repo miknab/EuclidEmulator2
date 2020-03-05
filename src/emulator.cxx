@@ -1,19 +1,20 @@
 #include <iostream>
 #include <string>
-#include <hdf5.h>
-#include <hdf5_hl.h>
+
 #include "cosmology.h"
 #include "pce.h"
 #include "emulator.h"
 
-EuclidEmulator::EuclidEmulator(){	/* === Member function === */
+EuclidEmulator::EuclidEmulator(): 
+	nz(101),
+	nk(613),
+	nCoeffs{53, 53, 117, 117, 53, \
+			117, 117, 117, 117, 521, \
+			117, 1539, 173, 457}
+{
+	/* === Member function === */
 	// Constructor loading PCE data file
-	hid_t file;
-	hsize_t size_PC1;
 
-		file = H5Fopen("EE2_cut1_zStpStart60.hdf5", H5F_ACC_RDONLY, H5P_DEFAULT);
-		//if (H5LTget_dataset_info(file, "/PCA/PC1", &size_PC1, NULL, NULL) < 0) abort();
-		if (H5LTread_dataset_double(file, "/PCA/PC1", PC1) < 0) abort();
 }
 
 // Compute NLC
