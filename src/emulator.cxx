@@ -39,19 +39,19 @@ EuclidEmulator::EuclidEmulator():
 	data = (double *) mmap (0, size, PROT_READ, MAP_PRIVATE, fp, 0);
 
 	// Reading in principal components //
-	for (i=0;i<15;++i) {
+	for (i=0;i<15;i++) {
     	this->pc[i] = &data[idx];  // pc[0] = PCA mean
     	idx += nk*nz;
     }
 
 	// Reading in PCE coefficients //
-	for (i=0;i<14;++i) {
+	for (i=0;i<14;i++) {
     	this->pce_coeffs[i] = &data[idx];
     	idx += n_coeffs[i];
     }
 
 	// Reading in PCE multi-indices //
-	for (i=0;i<14;++i) {
+	for (i=0;i<14;i++) {
     	this->pce_multiindex[i] = &data[idx];
     	idx += 8*n_coeffs[i];
     }
