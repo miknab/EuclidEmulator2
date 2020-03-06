@@ -1,9 +1,8 @@
 #include <iostream>
 #include <string>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
+#include <sys/stat.h> // struct stat and fstat() function
+#include <sys/mman.h> // mmap() function
+#include <fcntl.h>    // declaration of O_RDONLY
 #include "cosmology.h"
 #include "pce.h"
 #include "emulator.h"
@@ -22,6 +21,7 @@ EuclidEmulator::EuclidEmulator():
 	off_t size;
     struct stat s;
 	double *data;
+	int i, idx = 0;
 
 	// ==== LOAD EUCLIDEMULATOR2 DATA FILE ==== //
 	int fp = open("./ee2_bindata.dat", O_RDONLY);
@@ -37,12 +37,31 @@ EuclidEmulator::EuclidEmulator():
 
 	// Map the file into memory //
 	data = (double *) mmap (0, size, PROT_READ, MAP_PRIVATE, fp, 0);
+
+	// Reading in principal components //
+	for (i=0;i<15;++i) {
+    	this->pc[i] = &data[idx];  // pc[0] = PCA mean
+    	idx += nk*nz;
+    }
+
+	// Reading in PCE coefficients //
+	for (i=0;i<14;++i) {
+    	this->pce_coeffs[i] = &data[idx];
+    	idx += n_coeffs[i];
+    }
+
+	// Reading in PCE multi-indices //
+	for (i=0;i<14;++i) {
+    	this->pce_multiindex[i] = &data[idx];
+    	idx += 8*n_coeffs[i];
+    }
 }
 
 // Compute NLC
 void EuclidEmulator::compute_nlc(Cosmology csm, double *nlc){
+	
 }
 	
-// Write result to filei
+// Write result to file
 void EuclidEmulator::write_nlc(double* nlc){
 }

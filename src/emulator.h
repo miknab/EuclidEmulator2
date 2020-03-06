@@ -1,18 +1,20 @@
 #ifndef EMULATOR_H
 #define EMULATOR_H
 
+#include <fstream>
 #include "cosmology.h"
+
+using namespace std;
 
 class EuclidEmulator{
 	private:
 		const int nz; // number of redshifts in the training data
 		const int nk; // number of k modes in training data
-		const int nCoeffs[14];
-		
+		const int n_coeffs[14];
+
 		/* Data containers */
-		double *pc_mean;
-		double *pc;
-		double *pc_weights[14];
+		double *pc[15];
+		double pc_weights[14];
 		double *pce_coeffs[14];
 		double *pce_multiindex[14];
 			
