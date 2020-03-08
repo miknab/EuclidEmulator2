@@ -24,7 +24,6 @@ int main(int argc, char *argv[]) {
 	for(int i = 0; i < 20; i++) zvec[i] = -1.0; 
 
 	/* GET COSMOLOGICAL PARAMETERS FROM STDIN OR FILE */
-	std::cout << "Reading in cosmology" << std::endl;
 	if (argc >= 10){
 		Omega_b = atof(argv[1]);
 		Omega_m = atof(argv[2]);
@@ -59,11 +58,9 @@ int main(int argc, char *argv[]) {
 
 	/* Define cosmology struct */
 	Cosmology cosmo = Cosmology(Omega_b, Omega_m, Sum_m_nu, n_s, h, w_0, w_a, A_s);
-	std::cout << "cosmo instantiated" << std::endl;	
+
 	/* Initialize EE session */
 	EuclidEmulator ee2 = EuclidEmulator();
-	std::cout << "EE2 instantiated\n" << std::endl;
-	for(int i=0; i<613; i++) std::cout << ee2.kvec[i] << std::endl;
 
 	/* compute NLCs for each cosmology */
 	for(int i=0; i<n_redshift; i++){

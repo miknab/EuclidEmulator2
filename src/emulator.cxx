@@ -16,7 +16,13 @@ EuclidEmulator::EuclidEmulator():
 	n_coeffs{53, 53, 117, 117, 53, \
 			117, 117, 117, 117, 521, \
 			117, 1539, 173, 457}
-{	
+	{
+	read_in_ee2_data_file();
+	pc_2d_interp();
+}
+
+/* FUNCTION TO READ IN THE DATA FILE */
+void EuclidEmulator::read_in_ee2_data_file(){	
 	/// VARIABLE DECLARATIONS ///
 	off_t size;
     struct stat s;
@@ -65,7 +71,6 @@ EuclidEmulator::EuclidEmulator():
     kptr = &data[idx];
     for (i=0;i<nk;i++) {
 		this->kvec[i] = kptr[i];
-		std::cout << this->kvec[i] << std::endl;
     }
     idx += nk;
 
@@ -73,11 +78,16 @@ EuclidEmulator::EuclidEmulator():
 	assert(idx == size/sizeof(double));
 }
 
-// Compute NLC
+/* 2D INTERPOLATION OF PRINCIPAL COMPONENTS */
+void EuclidEmulator::pc_2d_interp(){
+
+}
+
+/* COMPUTE NLC */
 void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift){
 	// assign to this->Bvec
 }
 	
-// Write result to file
+/* WRITE NLC TO FILE */
 void EuclidEmulator::write_nlc(double* nlc){
 }
