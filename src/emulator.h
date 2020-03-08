@@ -1,6 +1,8 @@
 #ifndef EMULATOR_H
 #define EMULATOR_H
 
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_spline2d.h>
 #include <fstream>
 #include "cosmology.h"
 
@@ -12,6 +14,8 @@ class EuclidEmulator{
 		const int nz; // number of redshifts in the training data
 		const int nk; // number of k modes in training data
 		const int n_coeffs[14];
+
+    	gsl_spline2d     *logklogz2pc_spline[15];
 
 		/* Private data containers */
 		double *pc[15];
@@ -30,7 +34,8 @@ class EuclidEmulator{
 
 		/* Public member functions */
 		EuclidEmulator();
-		void compute_nlc(Cosmology csm, double *nlc);
+		~EuclidEmulator();
+		void compute_nlc(Cosmology csm, double *redshift, double *kmode);
 		void write_nlc(double* nlc);
 };
 

@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
     double A_s = 0.0;
 	int n_redshift = 0;
 	double zvec[20];
+	double *kmodes;
 
 	for(int i = 0; i < 20; i++) zvec[i] = -1.0; 
 
@@ -64,7 +65,7 @@ int main(int argc, char *argv[]) {
 
 	/* compute NLCs for each cosmology */
 	for(int i=0; i<n_redshift; i++){
-		ee2.compute_nlc(cosmo, zvec);
+		ee2.compute_nlc(cosmo, zvec, kmodes);
 	}
 	//ee2.compute_nlc(mycsm, nlc);
 	return 0;

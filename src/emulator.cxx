@@ -3,6 +3,9 @@
 #include <sys/stat.h> // struct stat and fstat() function
 #include <sys/mman.h> // mmap() function
 #include <fcntl.h>    // declaration of O_RDONLY
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_spline2d.h>
+#include <math.h>
 #include "cosmology.h"
 #include "pce.h"
 #include "emulator.h"
@@ -19,6 +22,11 @@ EuclidEmulator::EuclidEmulator():
 	{
 	read_in_ee2_data_file();
 	pc_2d_interp();
+}
+
+/* DESTRUCTOR */
+EuclidEmulator::~EuclidEmulator(){
+	for(int i=0; i<15; i++) gsl_spline2d_free(logklogz2pc_spline[i]);
 }
 
 /* FUNCTION TO READ IN THE DATA FILE */
@@ -80,11 +88,27 @@ void EuclidEmulator::read_in_ee2_data_file(){
 
 /* 2D INTERPOLATION OF PRINCIPAL COMPONENTS */
 void EuclidEmulator::pc_2d_interp(){
+	double logk[nk];
+	double stp[nz];
+	int i;
+	
+	for (i=0; i<nk; i++) logk[i] = log(kvec[i]);
+	for (i=nz-1; i>=0; i--) stp[i] = i;	
 
+	for (int i=0; i<15; i++){
+    	logklogz2pc_spline[i] = gsl_spline2d_alloc(gsl_interp2d_bicubic, nk, nz);
+    	gsl_spline2d_init(logklogz2pc_spline[i], logk, stp, pc[i], nk, nz);
+	}
 }
 
 /* COMPUTE NLC */
-void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift){
+void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, double *kmode){
+	// Somewhere here the following lines has to be executed
+	//for(int i=0; i<nz; i++){
+	//	for(int j=0; j<nk; j++){
+    //		gsl_spline2d_eval(logklogz2pc_spline, log(kmode[j]), log(redshift[i]), logk2pc_acc, logz2pc_acc);
+	//	}
+	//}
 	// assign to this->Bvec
 }
 	
