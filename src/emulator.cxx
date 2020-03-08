@@ -21,12 +21,17 @@ EuclidEmulator::EuclidEmulator():
 	off_t size;
     struct stat s;
 	double *data;
+	double *kptr;
 	int i, idx = 0;
+
+	for(i=0; i < 613; i++){
+		this->Bvec[i] = 0.0; // initialize the resulting nlc vector
+	}
 
 	// ==== LOAD EUCLIDEMULATOR2 DATA FILE ==== //
 	int fp = open("./ee2_bindata.dat", O_RDONLY);
 	if(!fp) {
-		cerr << "Unable to open ./ee2_data/ee2_pcs.dat.\n";
+		cerr << "Unable to open ./ee2_bindata.dat\n";
         exit(1);
 	}
 
@@ -55,11 +60,22 @@ EuclidEmulator::EuclidEmulator():
     	this->pce_multiindex[i] = &data[idx];
     	idx += 8*n_coeffs[i];
     }
+
+	// vector of k modes
+    kptr = &data[idx];
+    for (i=0;i<nk;i++) {
+		this->kvec[i] = kptr[i];
+		std::cout << this->kvec[i] << std::endl;
+    }
+    idx += nk;
+
+	// Check if all data has been read in properly
+	assert(idx == size/sizeof(double));
 }
 
 // Compute NLC
-void EuclidEmulator::compute_nlc(Cosmology csm, double *nlc){
-	
+void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift){
+	// assign to this->Bvec
 }
 	
 // Write result to file

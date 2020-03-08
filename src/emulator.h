@@ -19,6 +19,9 @@ class EuclidEmulator{
 		double *pce_multiindex[14];
 			
 	public:
+		double kvec[613];
+		double Bvec[613];
+
 		EuclidEmulator();
 		void compute_nlc(Cosmology csm, double *nlc);
 		void write_nlc(double* nlc);

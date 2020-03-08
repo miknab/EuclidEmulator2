@@ -18,8 +18,13 @@ int main(int argc, char *argv[]) {
     double w_0 = 0.0;
     double w_a = 0.0;
     double A_s = 0.0;
+	int n_redshift = 0;
+	double zvec[20];
+
+	for(int i = 0; i < 20; i++) zvec[i] = -1.0; 
 
 	/* GET COSMOLOGICAL PARAMETERS FROM STDIN OR FILE */
+	std::cout << "Reading in cosmology" << std::endl;
 	if (argc >= 10){
 		Omega_b = atof(argv[1]);
 		Omega_m = atof(argv[2]);
@@ -30,9 +35,9 @@ int main(int argc, char *argv[]) {
 		w_a = atof(argv[7]);
 		A_s = atof(argv[8]);
 
-		double zvec[argc - 9];
+		n_redshift = argc - 9;
 		for(int i=9; i<argc; i++){
-			zvec[i] = atoi(argv[i+9]);
+			zvec[i-9] = atoi(argv[i]);
 		}		
 	}
 	else if(argc==1){
@@ -54,14 +59,16 @@ int main(int argc, char *argv[]) {
 
 	/* Define cosmology struct */
 	Cosmology cosmo = Cosmology(Omega_b, Omega_m, Sum_m_nu, n_s, h, w_0, w_a, A_s);
-	
+	std::cout << "cosmo instantiated" << std::endl;	
 	/* Initialize EE session */
 	EuclidEmulator ee2 = EuclidEmulator();
-
-	/* Read-in cosmology/cosmologies */
+	std::cout << "EE2 instantiated\n" << std::endl;
+	for(int i=0; i<613; i++) std::cout << ee2.kvec[i] << std::endl;
 
 	/* compute NLCs for each cosmology */
-	int csm_cntr = 0;
+	for(int i=0; i<n_redshift; i++){
+		ee2.compute_nlc(cosmo, zvec);
+	}
 	//ee2.compute_nlc(mycsm, nlc);
 	return 0;
 }
