@@ -4,7 +4,7 @@
 #include <string>
 
 #include "emulator.h"
-#include "cosmology.h"
+//#include "cosmo.h"
 
 int main(int argc, char *argv[]) {
 	const int nPCA = 15; //15 principal components
@@ -62,11 +62,13 @@ int main(int argc, char *argv[]) {
 
 	/* Initialize EE session */
 	EuclidEmulator ee2 = EuclidEmulator();
+	std::cout << "EuclidEmulator2 >> Session started... " << std::endl;
 
 	/* compute NLCs for each cosmology */
 	for(int i=0; i<n_redshift; i++){
-		ee2.compute_nlc(cosmo, zvec, kmodes);
+		ee2.compute_nlc(cosmo, zvec, n_redshift, kmodes, sizeof(kmodes)/sizeof(double));
 	}
-	//ee2.compute_nlc(mycsm, nlc);
+
+	std::cout << "EuclidEmulator2 >> Session closed... " << std::endl;
 	return 0;
 }

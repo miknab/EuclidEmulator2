@@ -9,8 +9,9 @@
 
 /* CONSTRUCTOR */
 Cosmology::Cosmology(double Omega_b, double Omega_m, double Sum_m_nu, double n_s, double h, double w_0, double w_a, double A_s):
-	nSteps(101),
-	nTable(101)
+	Neff(3.046),
+	nTable(101),
+	nSteps(101)
 	{
 	this->cosmo[0] = Omega_b;
     this->cosmo[1] = Omega_m;
@@ -21,9 +22,11 @@ Cosmology::Cosmology(double Omega_b, double Omega_m, double Sum_m_nu, double n_s
     this->cosmo[6] = w_a;
 	this->cosmo[7] = A_s;
 
+	this->Omega_nu_0 = Cosmology::Omega_nu(1.0);
+
 	// Compute the actual critical density of the Universe in SI units for
 	// the given cosmology:
-	SI_units::rho_crit = SI_units::rho_crit_over_h2 * pow(this->cosmo[4],2);
+	this->rho_crit = SI_units::rho_crit_over_h2 * pow(this->cosmo[4],2);
 
 	// GSL interpolation object for redshift-to-nStep conversion:
 	// The spline is depends on the cosmology but takes redshift as an
@@ -31,6 +34,7 @@ Cosmology::Cosmology(double Omega_b, double Omega_m, double Sum_m_nu, double n_s
 	// a Cosmology class object is instantiated. From then on, the spline
 	// can be evaluated as often as necessary until the Cosmology object 
 	// is destroyed.
+	gsl_wsp = gsl_integration_workspace_alloc(LIMIT);
 	acc = gsl_interp_accel_alloc();
     z2nStep_spline = gsl_spline_alloc(gsl_interp_cspline, nTable);
 	// In the next line the spline is actually being computed:
@@ -50,7 +54,8 @@ Cosmology::Cosmology(double Omega_b, double Omega_m, double Sum_m_nu, double n_s
 
 /* DESTRUCTOR */
 Cosmology::~Cosmology(){
-    gsl_interp_free(spline);
+    gsl_integration_workspace_free(this->gsl_wsp);
+    gsl_spline_free(z2nStep_spline);
 }
 
 /* CHECK PARAMETER RANGES */
@@ -92,10 +97,11 @@ double Cosmology::Omega_gamma(double a){
 	// Present day photon density corresponding to T_gamma (also in SI units):
 	double rho_gamma_0 =  M_PI * M_PI / 15.0 
 						* pow(SI_units::kB,4) / (pow(SI_units::hbar,3)*pow(SI_units::c,5))
-						* pow(SI_units:Tgamma,4);
+						* pow(SI_units::Tgamma,4);
 
 	// Scale the photon density and return result
-    return rho_gamma_0 / (SI_units::rho_crit * a*a*a*a);
+	this->Omega_gamma_0 = rho_gamma_0 / this->rho_crit;
+    return this->Omega_gamma_0 / (a*a*a*a);
 }
 
 double Cosmology::rho_nu_i_integrand(double p, void * params){
@@ -125,27 +131,26 @@ double Cosmology::Omega_nu(double a){
 	// (according to eq. 2.69 in my thesis). Remember that this integral is 
 	// an integral over the momentum p, so we start by defining an uper bound
 	// "pmax" for the integration:
-	double pmax = 0.004/rho_nu_pars->a * SI_units::eV/SI_units::c;
-
-	gsl_integration_workspace *gsl_wsp = gsl_integration_workspace_alloc(LIMIT);
+	double pmax = 0.004/a * SI_units::eV/SI_units::c;
 
 	// Remember that we always assume degenerate neutrino hierarchy. This is
 	// why the mass of a single neutrino species is a third of Sum m_nu (which
 	// is stored in this->cosmo[2].
 	rho_nu_pars.mnu = this->cosmo[2]/3.0; 
 	rho_nu_pars.a = a;
+	rho_nu_pars.csm_instance = this;
 
-	F.function = &rho_nu_i_integrand;
+	F.function = &rho_nu_i_integrand_wrapper;
 	F.params = &rho_nu_pars;
 
 	gsl_integration_qag(&F, 0, pmax, 0.0,
 						EPSCOSMO, LIMIT, GSL_INTEG_GAUSS61,
 						gsl_wsp, &rho_nu_i, &error); 
-	gsl_integration_romberg_free(gsl_wsp); 
+
 
     // NOTICE: The prefactor 3 comes from the fact that we ALWAYS consider three
     // equal-mass neutrinos while rho_nu_i computes the density of ONE neutrino species
-	return 3*rho_nu_i / SI_units::rho_crit;
+	return 3*rho_nu_i / this->rho_crit;
 }
 
 double Cosmology::Omega_DE(double a){ 
@@ -155,7 +160,7 @@ double Cosmology::Omega_DE(double a){
 	|*			Omega_matter + Omega_gamma + Omega_nu + Omega_DE = 1      *|
 	|*																	  *|
 	\* The assumption of a flat Universe is thus hardcoded.               */
-	double Omega_DE_0 = 1 - (this->cosmo[0] + Omega_gamma_0 + Omega_nu_0);
+	double Omega_DE_0 = 1 - (this->cosmo[0] + this->Omega_gamma_0 + this->Omega_nu_0);
 	double w_0 = this->cosmo[5];
 	double w_a = this->cosmo[6];
 
@@ -163,7 +168,7 @@ double Cosmology::Omega_DE(double a){
 	return Omega_DE_0 * pow(a, -3.0 *(1 + w_0 + w_a)) * exp(-3*(1-a)*w_a);
 }
 
-void Cosmology::a2Hubble(double a){
+double Cosmology::a2Hubble(double a){
 	/* This function computes the Hubble parameter at scale factor a */
 	H0 = 100*this->cosmo[4];
 	return H0 * sqrt( Cosmology::Omega_matter(a)
@@ -173,26 +178,26 @@ void Cosmology::a2Hubble(double a){
 					);
 }
 
-double Cosmology::a2t_integrand(double a){
+double Cosmology::a2t_integrand(double a, void *params){
 	/* This function provides the integrand for the GSL *\
 	\* integration in Cosmology::a2t below.             */
-	return 2.0/(3.0 * pow(a, 1.5) * a2Hubble(a)) 
+	return 2.0/(3.0 * pow(a, 1.5) * a2Hubble(a));
 }
 
 double Cosmology::a2t(double a){
 	/* This function converts a scale factor a to a proper time. *\
 	|* The integration is solved by GSL and the integrand is     *|
 	\* by Cosmology::a2t_integrand.                              */
+	a2t_parameters a2t_params;
 	gsl_function F;
-	gsl_integration_workspace *gsl_wsp = gsl_integration_workspace_alloc(LIMIT);
 	double result, error;
-
-	F.function = &a2t_integrand;
+	a2t_params.csm_instance = this;
+	F.function = a2t_integrand_wrapper;
 
 	gsl_integration_qag(&F, 0.0, a, 0.0,
 						EPSCOSMO, LIMIT, GSL_INTEG_GAUSS61,
-						gsl_wsp, &result, &error);
-	
+						this->gsl_wsp, &result, &error);
+
 	return result;
 }
 
@@ -202,11 +207,12 @@ void Cosmology::compute_z2nStep_spline(){
 	\* gsl_spline function than can be readily evaluated.                   */
 
 	// Step 1: Setup the array
-	double avec[this->nTable]={0};
-	double frac_nStep[this->nTable]={0};
+	double t_current, z;
+	double avec[101]={0};
+	double frac_nStep[101]={0};
 
 	double z10 = 10.0;
-	for(int idx=0; idx<nTable; idx++){
+	for(int idx=0; idx<this->nTable; idx++){
 		// Loop through redshifts: z \in {10.0, 9.9, ..., 0.1, 0.0}
 		z = z10 - idx*0.1; 
 		// Convert z to a (remember that GSL interpolator expects
@@ -227,7 +233,7 @@ void Cosmology::compute_z2nStep_spline(){
 }
 
 /* INTERPOLATE OUTPUT STEP */
-double Cosmology::compute_step_number(double z);
+double Cosmology::compute_step_number(double z){
 	/* This function evaluates the spline mapping *\
 	\* a redshift to a (fractional) output step.  */ 
 	if(z==0.0){

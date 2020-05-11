@@ -4,7 +4,7 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline2d.h>
 #include <fstream>
-#include "cosmology.h"
+#include "cosmo.h"
 
 using namespace std;
 
@@ -14,28 +14,34 @@ class EuclidEmulator{
 		const int nz; // number of redshifts in the training data
 		const int nk; // number of k modes in training data
 		const int n_coeffs[14];
+		const int lmax;
 
-    	gsl_spline2d     *logklogz2pc_spline[15];
+		gsl_interp_accel * logk2pc_acc[15];
+    	gsl_interp_accel * logz2pc_acc[15];
+    	gsl_spline2d     * logklogz2pc_spline[15];
 
 		/* Private data containers */
-		double *pc[15];
-		double pc_weights[14];
-		double *pce_coeffs[14];
-		double *pce_multiindex[14];
+		double * pc[15];             // principal components
+		double pc_weights[14];      // PCA weights
+		double * pce_coeffs[14];     // PCE coefficients
+		double * pce_multiindex[14]; // PCE multi-indices
+		double * univ_legendre[8]; // univariate legendre polynomials
+		double * pce_basisfuncs;		// multivariate legendre polynomials
 
 		/* Private member functions */
 		void read_in_ee2_data_file();
 		void pc_2d_interp();
-		
+		void print_info();		
+
 	public:
 		/* Public members */
-		double kvec[613];
-		double Bvec[613];
+		double * kvec;
+		double ** Bvec;
 
 		/* Public member functions */
 		EuclidEmulator();
 		~EuclidEmulator();
-		void compute_nlc(Cosmology csm, double *redshift, double *kmode);
+		void compute_nlc(Cosmology csm, double *redshift, int n_redshift, double *kmodes, int n_kmodes);
 		void write_nlc(double* nlc);
 };
 
