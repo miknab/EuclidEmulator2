@@ -7,42 +7,58 @@
 #define EPSCOSMO 1e-7
 #define LIMIT 1000
 
+//using namespace planck_units;
+using namespace SI_units;
+
 /* CONSTRUCTOR */
 Cosmology::Cosmology(double Omega_b, double Omega_m, double Sum_m_nu, double n_s, double h, double w_0, double w_a, double A_s):
 	Neff(3.046),
 	nTable(101),
 	nSteps(101)
 	{
+	// GSL interpolation object for redshift-to-nStep conversion:
+    // The spline is depends on the cosmology but takes redshift as an
+    // argument. For this very reason, the spline can computed once when
+    // a Cosmology class object is instantiated. From then on, the spline
+    // can be evaluated as often as necessary until the Cosmology object 
+    // is destroyed.
+    gsl_wsp = gsl_integration_workspace_alloc(LIMIT);
+    acc = gsl_interp_accel_alloc();
+
 	this->cosmo[0] = Omega_b;
     this->cosmo[1] = Omega_m;
-    this->cosmo[2] = Sum_m_nu;
+    this->cosmo[2] = Sum_m_nu * eV/pow(c,2);
     this->cosmo[3] = n_s;
     this->cosmo[4] = h;
     this->cosmo[5] = w_0;
     this->cosmo[6] = w_a;
 	this->cosmo[7] = A_s;
-
-	this->Omega_nu_0 = Cosmology::Omega_nu(1.0);
-
+	// Compute the present day temperatures of the photon (gamma) and the
+	// neutrino (nu) fluids:
+    this->T_gamma_0 = T_gamma(1.0);
+    this->T_nu_0 = T_nu(1.0);
 	// Compute the actual critical density of the Universe in SI units for
-	// the given cosmology:
-	this->rho_crit = SI_units::rho_crit_over_h2 * pow(this->cosmo[4],2);
+    // the given cosmology:
+	this->rho_crit = rho_crit_over_h2 * pow(this->cosmo[4],2);
+	// Now we can compute the present day values of the density parameters 
+	// of the neutrino, the photon and the dark energy (DE) fluid:
+	this->Omega_nu_0 = Omega_nu(1.0);
+	this->Omega_gamma_0 = Omega_gamma(1.0);
+	this->Omega_DE_0 = 1 - (this->cosmo[1] + this->Omega_gamma_0 + this->Omega_nu_0);
+	// Print all information about cosmological parameters:
+	print_cosmo();
 
-	// GSL interpolation object for redshift-to-nStep conversion:
-	// The spline is depends on the cosmology but takes redshift as an
-	// argument. For this very reason, the spline can computed once when
-	// a Cosmology class object is instantiated. From then on, the spline
-	// can be evaluated as often as necessary until the Cosmology object 
-	// is destroyed.
-	gsl_wsp = gsl_integration_workspace_alloc(LIMIT);
-	acc = gsl_interp_accel_alloc();
-    z2nStep_spline = gsl_spline_alloc(gsl_interp_cspline, nTable);
-	// In the next line the spline is actually being computed:
-	compute_z2nStep_spline();
-
+	// Prepare for spline interpolation of z --> nStep mapping:
 	t0  = a2t(1.0); // proper time at z = 0 (or equivalently a = 1) 
     t10 = a2t(10.0); // proper time at z = 10 (or equivalently a = 0.090909...)
     Delta_t = (t0-t10)/nSteps;
+	printf("t(z=0) = %.12e\tt(z=10) = %.12e\tDelta_t = %.12e\n", t0, t10, Delta_t);
+
+    z2nStep_spline = gsl_spline_alloc(gsl_interp_cspline, nTable);
+	// In the next line the spline is actually being computed:
+	printf("Precomputing the spline for z -> nStep conversion...\n");
+	compute_z2nStep_spline();
+	printf("Spline computation complete.\n");
 
 	/* Member functions */
 	check_parameter_ranges();
@@ -96,30 +112,38 @@ double Cosmology::Omega_gamma(double a){
 
 	// Present day photon density corresponding to T_gamma (also in SI units):
 	double rho_gamma_0 =  M_PI * M_PI / 15.0 
-						* pow(SI_units::kB,4) / (pow(SI_units::hbar,3)*pow(SI_units::c,5))
-						* pow(SI_units::Tgamma,4);
+						* pow(kB,4) / (pow(hbar,3)*pow(c,5))
+						* pow(Tgamma,4);
 
 	// Scale the photon density and return result
 	this->Omega_gamma_0 = rho_gamma_0 / this->rho_crit;
     return this->Omega_gamma_0 / (a*a*a*a);
 }
 
+double Cosmology::T_gamma(double a){
+	return Tgamma/a;
+}
+
+double Cosmology::T_nu(double a){
+	return pow(this->Neff/3.0,0.25)*pow(4.0/11.0,1./3.)*Tgamma/a;
+}
+
 double Cosmology::rho_nu_i_integrand(double p, void * params){
 	/* This function provides the integrand for the function Cosmology::Omega_nu */
 	rho_nu_parameters *rho_nu_pars = reinterpret_cast<rho_nu_parameters *>(params);
 
-	double Tnu = pow(Neff/3.0,0.25)*pow(4.0/11.0,1./3.)*SI_units::Tgamma;
-	double prefactor = 1.0/(pow(M_PI,2) * pow(SI_units::hbar,3) * pow(SI_units::c,2));
+	double T_nu = rho_nu_pars->csm_instance->T_nu_0;
+	double mnui = rho_nu_pars->mnu_i;
 	double p2 = p*p;
+	double y = p2 / ( exp(c/kB/T_nu * rho_nu_pars->a * p) + 1 );
 
-	return  SI_units::c * p2 * sqrt( pow(rho_nu_pars->mnu * SI_units::c,2) + p2 )
-		  / (exp(rho_nu_pars->a * p/Tnu * SI_units::c/SI_units::kB) + 1);
+	return y * sqrt( mnui*mnui*c*c*c*c + p2*c*c);
 }
 
 double Cosmology::Omega_nu(double a){
 	/* This function computes the neutrino density parameter in the Universe at scale factor a */
 	/* REMARK: The assumption of a degenerate neutrino hierarchy is hardcoded. */
-
+	//printf("Entering Omega_nu...\n");
 	rho_nu_parameters rho_nu_pars;
 	gsl_function F;
 	double rho_nu_i, error;
@@ -131,23 +155,26 @@ double Cosmology::Omega_nu(double a){
 	// (according to eq. 2.69 in my thesis). Remember that this integral is 
 	// an integral over the momentum p, so we start by defining an uper bound
 	// "pmax" for the integration:
-	double pmax = 0.004/a * SI_units::eV/SI_units::c;
+	double pmax = 0.004/a * eV/c;
+	double prefactor = 1.0/(pow(M_PI,2) * pow(hbar,3) * pow(c,2));
 
 	// Remember that we always assume degenerate neutrino hierarchy. This is
 	// why the mass of a single neutrino species is a third of Sum m_nu (which
 	// is stored in this->cosmo[2].
-	rho_nu_pars.mnu = this->cosmo[2]/3.0; 
+	rho_nu_pars.mnu_i = this->cosmo[2]/3.0; 
 	rho_nu_pars.a = a;
 	rho_nu_pars.csm_instance = this;
 
-	F.function = &rho_nu_i_integrand_wrapper;
+	//printf("Setting up GSL integrator...\n");
+	F.function = &rho_nu_i_integrand;
 	F.params = &rho_nu_pars;
-
 	gsl_integration_qag(&F, 0, pmax, 0.0,
 						EPSCOSMO, LIMIT, GSL_INTEG_GAUSS61,
 						gsl_wsp, &rho_nu_i, &error); 
 
+	rho_nu_i *= prefactor;
 
+	//printf("GSL integration complete.\n");
     // NOTICE: The prefactor 3 comes from the fact that we ALWAYS consider three
     // equal-mass neutrinos while rho_nu_i computes the density of ONE neutrino species
 	return 3*rho_nu_i / this->rho_crit;
@@ -160,12 +187,11 @@ double Cosmology::Omega_DE(double a){
 	|*			Omega_matter + Omega_gamma + Omega_nu + Omega_DE = 1      *|
 	|*																	  *|
 	\* The assumption of a flat Universe is thus hardcoded.               */
-	double Omega_DE_0 = 1 - (this->cosmo[0] + this->Omega_gamma_0 + this->Omega_nu_0);
 	double w_0 = this->cosmo[5];
 	double w_a = this->cosmo[6];
 
 	// The following is equation (2.67) in my thesis
-	return Omega_DE_0 * pow(a, -3.0 *(1 + w_0 + w_a)) * exp(-3*(1-a)*w_a);
+	return this->Omega_DE_0 * pow(a, -3.0 *(1 + w_0 + w_a)) * exp(-3*(1-a)*w_a);
 }
 
 double Cosmology::a2Hubble(double a){
@@ -181,7 +207,8 @@ double Cosmology::a2Hubble(double a){
 double Cosmology::a2t_integrand(double a, void *params){
 	/* This function provides the integrand for the GSL *\
 	\* integration in Cosmology::a2t below.             */
-	return 2.0/(3.0 * pow(a, 1.5) * a2Hubble(a));
+	a2t_parameters *a2t_pars = reinterpret_cast<a2t_parameters *>(params);
+	return 2.0/(3.0 * pow(a, 1.5) * a2t_pars->csm_instance->a2Hubble(a));
 }
 
 double Cosmology::a2t(double a){
@@ -192,8 +219,8 @@ double Cosmology::a2t(double a){
 	gsl_function F;
 	double result, error;
 	a2t_params.csm_instance = this;
-	F.function = a2t_integrand_wrapper;
-
+	F.function = &a2t_integrand;
+	F.params = &a2t_params;
 	gsl_integration_qag(&F, 0.0, a, 0.0,
 						EPSCOSMO, LIMIT, GSL_INTEG_GAUSS61,
 						this->gsl_wsp, &result, &error);
@@ -220,11 +247,13 @@ void Cosmology::compute_z2nStep_spline(){
 		avec[idx] = 1.0/(z+1.0);
 		// Convert a to t
 		t_current = Cosmology::a2t(avec[idx]);
+		printf("t(z=%.2f) = %.12e\n", z, t_current);
 		// Convert t to nStep (fractional)
 		frac_nStep[idx] = (t_current - this->t10)/this->Delta_t;
 	}
 
 	// Some sanity checks:
+	printf("frac_nStep[0] = %.12e\n", frac_nStep[0]);
 	assert(frac_nStep[0] == 0);
 	assert(frac_nStep[this->nTable-1] == this->nSteps);
 
@@ -248,15 +277,24 @@ double Cosmology::compute_step_number(double z){
 /* PRINT FUNCTIONS */
 void Cosmology::print_cosmo(){
 	std::cout << "The current cosmology is defined as:" << std::endl;
-	std::cout << std::endl;
 	std::cout << "\tOmega_b = " << this->cosmo[0] << std::endl;
 	std::cout << "\tOmega_m = " << this->cosmo[1] << std::endl;
-	std::cout << "\tSum m_nu = " << this->cosmo[2] << std::endl;
+	std::cout << "\tSum m_nu = " << this->cosmo[2] << " eV" << std::endl;
 	std::cout << "\tn_s = " << this->cosmo[3] << std::endl;
 	std::cout << "\th = " << this->cosmo[4] << std::endl;
 	std::cout << "\tw_0 = " << this->cosmo[5] << std::endl;
 	std::cout << "\tw_a = " << this->cosmo[6] << std::endl;
 	std::cout << "\tA_s = " << this->cosmo[7] << std::endl;
+	std::cout << std::endl;
+	std::cout << "Fixed parameters (hardcoded):" << std::endl;
+	std::cout << "\tT_gamma = " << this->T_gamma_0 << " K" << std::endl;
+    std::cout << std::endl;
+	std::cout << "Derived parameters:" << std::endl;
+    std::cout << "\tT_nu = " << this->T_nu_0 << " K" << std::endl;
+    std::cout << "\tOmega_nu = " << this->Omega_nu_0 << std::endl;
+	std::cout << "\tOmega_gamma = " << this->Omega_gamma_0 << std::endl;
+	std::cout << "\tOmega_DE = " << this->Omega_DE_0 << std::endl;
+	std::cout << "\trho_crit = " << this->rho_crit/(Msol/pow(Mpc,3)) << " h^2 M_sol/(Mpc^3)" << std::endl;
 	std::cout << std::endl;
 }
 

@@ -4,7 +4,6 @@
 #include <string>
 
 #include "emulator.h"
-//#include "cosmo.h"
 
 int main(int argc, char *argv[]) {
 	const int nPCA = 15; //15 principal components
@@ -26,6 +25,7 @@ int main(int argc, char *argv[]) {
 
 	/* GET COSMOLOGICAL PARAMETERS FROM STDIN OR FILE */
 	if (argc >= 10){
+		printf("Reading from stdin...\n");
 		Omega_b = atof(argv[1]);
 		Omega_m = atof(argv[2]);
 		Sum_m_nu = atof(argv[3]);
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
 		n_redshift = argc - 9;
 		for(int i=9; i<argc; i++){
 			zvec[i-9] = atoi(argv[i]);
-		}		
+		}
 	}
 	else if(argc==1){
 		ifstream cosmofile(argv[1]);
@@ -58,9 +58,12 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* Define cosmology struct */
+	printf("Defining cosmology...\n");
 	Cosmology cosmo = Cosmology(Omega_b, Omega_m, Sum_m_nu, n_s, h, w_0, w_a, A_s);
 
+
 	/* Initialize EE session */
+	printf("Construction of EuclidEmulator instance...\n");
 	EuclidEmulator ee2 = EuclidEmulator();
 	std::cout << "EuclidEmulator2 >> Session started... " << std::endl;
 
