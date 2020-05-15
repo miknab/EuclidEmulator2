@@ -27,7 +27,7 @@ Cosmology::Cosmology(double Omega_b, double Omega_m, double Sum_m_nu, double n_s
 
 	this->cosmo[0] = Omega_b;
     this->cosmo[1] = Omega_m;
-    this->cosmo[2] = Sum_m_nu * eV/pow(c,2);
+    this->cosmo[2] = Sum_m_nu;
     this->cosmo[3] = n_s;
     this->cosmo[4] = h;
     this->cosmo[5] = w_0;
@@ -45,20 +45,15 @@ Cosmology::Cosmology(double Omega_b, double Omega_m, double Sum_m_nu, double n_s
 	this->Omega_nu_0 = Omega_nu(1.0);
 	this->Omega_gamma_0 = Omega_gamma(1.0);
 	this->Omega_DE_0 = 1 - (this->cosmo[1] + this->Omega_gamma_0 + this->Omega_nu_0);
-	// Print all information about cosmological parameters:
-	print_cosmo();
 
 	// Prepare for spline interpolation of z --> nStep mapping:
 	t0  = a2t(1.0); // proper time at z = 0 (or equivalently a = 1) 
-    t10 = a2t(10.0); // proper time at z = 10 (or equivalently a = 0.090909...)
+    t10 = a2t(1.0/(10+1)); // proper time at z = 10 (or equivalently a = 0.090909...)
     Delta_t = (t0-t10)/nSteps;
-	printf("t(z=0) = %.12e\tt(z=10) = %.12e\tDelta_t = %.12e\n", t0, t10, Delta_t);
 
     z2nStep_spline = gsl_spline_alloc(gsl_interp_cspline, nTable);
 	// In the next line the spline is actually being computed:
-	printf("Precomputing the spline for z -> nStep conversion...\n");
 	compute_z2nStep_spline();
-	printf("Spline computation complete.\n");
 
 	/* Member functions */
 	check_parameter_ranges();
@@ -161,7 +156,7 @@ double Cosmology::Omega_nu(double a){
 	// Remember that we always assume degenerate neutrino hierarchy. This is
 	// why the mass of a single neutrino species is a third of Sum m_nu (which
 	// is stored in this->cosmo[2].
-	rho_nu_pars.mnu_i = this->cosmo[2]/3.0; 
+	rho_nu_pars.mnu_i = this->cosmo[2]/3.0 * eV/pow(c,2); 
 	rho_nu_pars.a = a;
 	rho_nu_pars.csm_instance = this;
 
@@ -196,7 +191,7 @@ double Cosmology::Omega_DE(double a){
 
 double Cosmology::a2Hubble(double a){
 	/* This function computes the Hubble parameter at scale factor a */
-	H0 = 100*this->cosmo[4];
+	H0 = 100*this->cosmo[4] * kilometer/second/Mpc;
 	return H0 * sqrt( Cosmology::Omega_matter(a)
 					+ Cosmology::Omega_gamma(a)
 					+ Cosmology::Omega_nu(a)
@@ -204,11 +199,11 @@ double Cosmology::a2Hubble(double a){
 					);
 }
 
-double Cosmology::a2t_integrand(double a, void *params){
+double Cosmology::a2t_integrand(double lna, void *params){
 	/* This function provides the integrand for the GSL *\
 	\* integration in Cosmology::a2t below.             */
 	a2t_parameters *a2t_pars = reinterpret_cast<a2t_parameters *>(params);
-	return 2.0/(3.0 * pow(a, 1.5) * a2t_pars->csm_instance->a2Hubble(a));
+	return 1./(a2t_pars->csm_instance->a2Hubble(exp(lna)));
 }
 
 double Cosmology::a2t(double a){
@@ -221,7 +216,7 @@ double Cosmology::a2t(double a){
 	a2t_params.csm_instance = this;
 	F.function = &a2t_integrand;
 	F.params = &a2t_params;
-	gsl_integration_qag(&F, 0.0, a, 0.0,
+	gsl_integration_qag(&F, -15, log(a), 0.0,
 						EPSCOSMO, LIMIT, GSL_INTEG_GAUSS61,
 						this->gsl_wsp, &result, &error);
 
@@ -247,13 +242,11 @@ void Cosmology::compute_z2nStep_spline(){
 		avec[idx] = 1.0/(z+1.0);
 		// Convert a to t
 		t_current = Cosmology::a2t(avec[idx]);
-		printf("t(z=%.2f) = %.12e\n", z, t_current);
 		// Convert t to nStep (fractional)
 		frac_nStep[idx] = (t_current - this->t10)/this->Delta_t;
 	}
 
 	// Some sanity checks:
-	printf("frac_nStep[0] = %.12e\n", frac_nStep[0]);
 	assert(frac_nStep[0] == 0);
 	assert(frac_nStep[this->nTable-1] == this->nSteps);
 
@@ -270,7 +263,7 @@ double Cosmology::compute_step_number(double z){
 	}
 	else{
 		// Now simply evaluate the precomputed spline
-		return gsl_spline_eval(this->z2nStep_spline, z, this->acc);
+		return gsl_spline_eval(this->z2nStep_spline, 1./(z+1.), this->acc);
 	}
 }
 

@@ -111,14 +111,11 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 	double basisfunc;
 	double stp_no[n_redshift];
 
-	Bvec = new double*[n_redshift]; 	
-
 	// Convert all redshifts into step numbers
 	// As we are looping through all redshifts anyway, we can just 
 	// as well use the same loop to declare Bvec[iz]
 	for(int iz=0; iz<n_redshift; iz++) {
-		stp_no[iz] = csm.compute_step_number(redshift[iz]);
-		Bvec[iz] = new double[n_kmodes];
+		stp_no[iz] = csm.compute_step_number(redshift[iz]);	
 	}
 
 	// Pre-compute all Legendre polynomials up to order lmax

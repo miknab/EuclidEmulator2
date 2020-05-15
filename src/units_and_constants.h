@@ -10,9 +10,10 @@ namespace SI_units{
 	const double Kelvin   = 1.0; // in Kelvin
 
 	// derived units
-	const double Joule = kilogram * pow(meter,2)/pow(second,2); // Joule
-	const double Mpc   = 3.085677581282e22 * meter; // megaparsec
-	const double Msol  = 1.98841e30 *kilogram; // solar kilogram
+	const double kilometer = 1000 * meter;
+	const double Joule     = kilogram * pow(meter,2)/pow(second,2); // Joule
+	const double Mpc       = 3.085677581282e22 * meter; // megaparsec
+	const double Msol      = 1.98841e30 *kilogram; // solar kilogram
 
 	// units constant
 	const double c        = 2.99792458e8 * meter/second; // speed of light

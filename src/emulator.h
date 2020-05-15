@@ -35,8 +35,8 @@ class EuclidEmulator{
 
 	public:
 		/* Public members */
-		double * kvec;
-		double ** Bvec;
+		double kvec[613];
+		double Bvec[101][613];
 
 		/* Public member functions */
 		EuclidEmulator();
