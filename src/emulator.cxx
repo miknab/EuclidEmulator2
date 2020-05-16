@@ -26,7 +26,9 @@ EuclidEmulator::EuclidEmulator():
 
 /* DESTRUCTOR */
 EuclidEmulator::~EuclidEmulator(){
-	for(int i=0; i<15; i++) gsl_spline2d_free(logklogz2pc_spline[i]);
+	for(int i=0; i<14; i++) {
+		gsl_spline2d_free(logklogz2pc_spline[i]);
+	}
 }
 
 /* FUNCTION TO READ IN THE DATA FILE */
@@ -94,7 +96,7 @@ void EuclidEmulator::pc_2d_interp(){
 	double stp[nz];
 	int i;
 	
-	for (i=0; i<nk; i++) logk[i] = log(kvec[i]);
+	for (i=0; i<nk; i++) logk[i] = log(this->kvec[i]);
 	for (i=nz-1; i>=0; i--) stp[i] = i;	
 
 	for (int i=0; i<15; i++){
@@ -106,7 +108,8 @@ void EuclidEmulator::pc_2d_interp(){
 }
 
 /* COMPUTE NLC */
-void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift, double* kmodes, int n_kmodes){	
+//void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift, double* kmodes, int n_kmodes){	
+void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift){
 	double pc_weight;
 	double basisfunc;
 	double stp_no[n_redshift];
@@ -115,7 +118,7 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 	// As we are looping through all redshifts anyway, we can just 
 	// as well use the same loop to declare Bvec[iz]
 	for(int iz=0; iz<n_redshift; iz++) {
-		stp_no[iz] = csm.compute_step_number(redshift[iz]);	
+		stp_no[iz] = csm.compute_step_number(redshift[iz]);
 	}
 
 	// Pre-compute all Legendre polynomials up to order lmax
@@ -129,13 +132,13 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 
 	// Initialize with PCA mean
 	for(int iz=0; iz<n_redshift; iz++){
-		for(int ik=0; ik<n_kmodes; ik++){
-			Bvec[iz][ik] = gsl_spline2d_eval(logklogz2pc_spline[0], log(kmodes[ik]), stp_no[iz], logk2pc_acc[0], logz2pc_acc[0]);
+		for(int ik=0; ik<nk; ik++){
+			Bvec[iz][ik] = gsl_spline2d_eval(logklogz2pc_spline[0], log(this->kvec[ik]), stp_no[iz], logk2pc_acc[0], logz2pc_acc[0]);
 		}
 	}
 
 	// Loop over principal components
-	for(int ipc=1; ipc<15; ipc++){
+	for(int ipc=1; ipc<14; ipc++){
 		pc_weight = 0.0;
 		// assemble PCE to get the PCA weight according
         // to inner sum of eq. 27 in EE2 paper
@@ -149,8 +152,8 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 		// assemble PCA to get the final NLC according
         // to outer sum of eq. 27 in EE2 paper
 		for(int iz=0; iz<n_redshift; iz++){
-			for(int ik=0; ik<n_kmodes; ik++){
-				Bvec[iz][ik] += (pc_weight*gsl_spline2d_eval(logklogz2pc_spline[ipc], log(kmodes[ik]), log(redshift[iz]), logk2pc_acc[ipc], logz2pc_acc[ipc]));
+			for(int ik=0; ik<nk; ik++){
+				Bvec[iz][ik] += (pc_weight*gsl_spline2d_eval(logklogz2pc_spline[ipc], log(this->kvec[ik]), stp_no[iz], logk2pc_acc[ipc], logz2pc_acc[ipc]));
 			}
 		}
 	}

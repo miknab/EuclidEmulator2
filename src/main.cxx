@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 
 		n_redshift = argc - 9;
 		for(int i=9; i<argc; i++){
-			zvec[i-9] = atoi(argv[i]);
+			zvec[i-9] = atof(argv[i]);
 		}
 	}
 	else if(argc==1){
@@ -69,9 +69,9 @@ int main(int argc, char *argv[]) {
 
 	/* compute NLCs for each cosmology */
 	for(int i=0; i<n_redshift; i++){
-		ee2.compute_nlc(cosmo, zvec, n_redshift, kmodes, sizeof(kmodes)/sizeof(double));
+		ee2.compute_nlc(cosmo, zvec, n_redshift);
+		//ee2.compute_nlc(cosmo, zvec, n_redshift, kmodes, sizeof(kmodes)/sizeof(double));
 	}
-
 	std::cout << "EuclidEmulator2 >> Session closed... " << std::endl;
 	return 0;
 }
