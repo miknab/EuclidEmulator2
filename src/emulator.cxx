@@ -27,7 +27,7 @@ EuclidEmulator::EuclidEmulator():
 
 /* DESTRUCTOR */
 EuclidEmulator::~EuclidEmulator(){
-	for(int i=0; i<14; i++) {
+	for(int i=0; i<15; i++) {
 		gsl_spline2d_free(logklogz2pc_spline[i]);
 	}
 }
@@ -89,6 +89,7 @@ void EuclidEmulator::read_in_ee2_data_file(){
 	// Check if all data has been read in properly
 	assert(idx == size/sizeof(double));
 
+	print_info();
 }
 
 /* 2D INTERPOLATION OF PRINCIPAL COMPONENTS */
@@ -143,16 +144,16 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 	//printf("PCA initialized\n");
 
 	// Loop over principal components
-	for(int ipc=1; ipc<14; ipc++){
+	for(int ipc=1; ipc<15; ipc++){
 		pc_weight = 0.0;
 		// assemble PCE to get the PCA weight according
         // to inner sum of eq. 27 in EE2 paper
         for(int ic=0; ic<n_coeffs[ipc-1]; ic++){
         	basisfunc = 1.0;
             for(int ipar=0; ipar<8 ; ipar++){
-                basisfunc *= univ_legendre[ipar][int(pce_multiindex[ipc][ic*8 + ipar])];
+                basisfunc *= univ_legendre[ipar][int(pce_multiindex[ipc-1][ic*8 + ipar])];
             }
-            pc_weight += pce_coeffs[ipc][ic]*basisfunc;
+            pc_weight += pce_coeffs[ipc-1][ic]*basisfunc;
         }
 		// assemble PCA to get the final NLC according
         // to outer sum of eq. 27 in EE2 paper
