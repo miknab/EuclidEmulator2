@@ -49,7 +49,7 @@ Cosmology::Cosmology(double Omega_b, double Omega_m, double Sum_m_nu, double n_s
 	// Prepare for spline interpolation of z --> nStep mapping:
 	t0  = a2t(1.0); // proper time at z = 0 (or equivalently a = 1) 
     t10 = a2t(1.0/(10+1)); // proper time at z = 10 (or equivalently a = 0.090909...)
-    Delta_t = (t0-t10)/nSteps;
+    Delta_t = (t0-t10)/(nSteps-1);
 
     z2nStep_spline = gsl_spline_alloc(gsl_interp_cspline, nTable);
 	// In the next line the spline is actually being computed:
@@ -248,7 +248,7 @@ void Cosmology::compute_z2nStep_spline(){
 
 	// Some sanity checks:
 	assert(frac_nStep[0] == 0);
-	assert(frac_nStep[this->nTable-1] == this->nSteps);
+	assert(frac_nStep[this->nTable-1] == this->nSteps-1);
 
 	// Step 2: Interpolate the array
 	gsl_spline_init(this->z2nStep_spline, avec, frac_nStep, this->nTable);
@@ -258,8 +258,8 @@ void Cosmology::compute_z2nStep_spline(){
 double Cosmology::compute_step_number(double z){
 	/* This function evaluates the spline mapping *\
 	\* a redshift to a (fractional) output step.  */ 
-	if(z==0.0){
-		return 101.0;
+	if(abs(z) < EPSCOSMO){
+		return 100.0;
 	}
 	else{
 		// Now simply evaluate the precomputed spline

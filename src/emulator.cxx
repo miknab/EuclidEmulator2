@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <sys/stat.h> // struct stat and fstat() function
 #include <sys/mman.h> // mmap() function
@@ -98,7 +99,6 @@ void EuclidEmulator::pc_2d_interp(){
 	
 	for (i=0; i<nk; i++) logk[i] = log(this->kvec[i]);
 	for (i=nz-1; i>=0; i--) stp[i] = i;	
-
 	for (int i=0; i<15; i++){
 		logk2pc_acc[i] = gsl_interp_accel_alloc();
         logz2pc_acc[i] = gsl_interp_accel_alloc();
@@ -119,7 +119,9 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 	// as well use the same loop to declare Bvec[iz]
 	for(int iz=0; iz<n_redshift; iz++) {
 		stp_no[iz] = csm.compute_step_number(redshift[iz]);
+        //printf("nStep(%.2f) = %.4f\n", redshift[iz], stp_no[iz]);
 	}
+	//printf("Redshifts mapped to nStep\n");
 
 	// Pre-compute all Legendre polynomials up to order lmax
 	for (int ipar=0; ipar < 8; ipar++){
@@ -129,13 +131,16 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 			univ_legendre[ipar][l] *= sqrt(2.0*l + 1.0); //normalization
 		}
 	}
+	//printf("Legendre polynomials computed\n");
 
 	// Initialize with PCA mean
 	for(int iz=0; iz<n_redshift; iz++){
 		for(int ik=0; ik<nk; ik++){
 			Bvec[iz][ik] = gsl_spline2d_eval(logklogz2pc_spline[0], log(this->kvec[ik]), stp_no[iz], logk2pc_acc[0], logz2pc_acc[0]);
 		}
+		//printf("B(k_max, z=%.2f) = %.2f\n", redshift[iz], Bvec[iz][nk-1]);
 	}
+	//printf("PCA initialized\n");
 
 	// Loop over principal components
 	for(int ipc=1; ipc<14; ipc++){
@@ -152,15 +157,37 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 		// assemble PCA to get the final NLC according
         // to outer sum of eq. 27 in EE2 paper
 		for(int iz=0; iz<n_redshift; iz++){
+			//printf("Treating z[%d] = %.3f ==> nStep = %.3f\n", iz, redshift[iz], stp_no[iz]); 
 			for(int ik=0; ik<nk; ik++){
 				Bvec[iz][ik] += (pc_weight*gsl_spline2d_eval(logklogz2pc_spline[ipc], log(this->kvec[ik]), stp_no[iz], logk2pc_acc[ipc], logz2pc_acc[ipc]));
 			}
 		}
 	}
+	//printf("PCA assembled\n");
 }
 	
 /* WRITE NLC TO FILE */
-void EuclidEmulator::write_nlc(double* nlc){
+void EuclidEmulator::write_nlc2file(const string& filename, double * zvec, int n_redshift){
+	ofstream fp_out (filename);
+	// Writing an informative header line
+	string header = "#k [h/Mpc]";
+	for(int iz=0; iz<n_redshift; iz++){
+		header.append("\tB(k,z="+to_string(zvec[iz])+")");
+	}
+	fp_out << header << endl;
+
+	// Writing the data
+	if (fp_out.is_open()){	
+		for(int ik=0; ik<nk; ik++){
+			string line = to_string(this->kvec[ik]);
+			for(int iz=0; iz<n_redshift; iz++){
+				line.append("\t");
+  				line.append(to_string(pow(10.0,Bvec[iz][ik])));
+			}
+			fp_out << line << endl;
+		}
+	}
+	else cout << "Unable to open file" << endl;
 }
 
 /* PRINT INFO */

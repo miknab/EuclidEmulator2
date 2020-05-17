@@ -36,9 +36,17 @@ int main(int argc, char *argv[]) {
 		A_s = atof(argv[8]);
 
 		n_redshift = argc - 9;
+		printf("Computing the NLC at %d different redshifts:\n", n_redshift);
+		string zvecstr = "zvec = ["; 
 		for(int i=9; i<argc; i++){
 			zvec[i-9] = atof(argv[i]);
+			zvecstr.append(to_string(zvec[i-9]));
+			if (i != argc-1) {
+				zvecstr.append(", ");
+			}
 		}
+		zvecstr.append("]");
+		cout << zvecstr << endl;
 	}
 	else if(argc==1){
 		ifstream cosmofile(argv[1]);
@@ -68,10 +76,14 @@ int main(int argc, char *argv[]) {
 	std::cout << "EuclidEmulator2 >> Session started... " << std::endl;
 
 	/* compute NLCs for each cosmology */
-	for(int i=0; i<n_redshift; i++){
-		ee2.compute_nlc(cosmo, zvec, n_redshift);
-		//ee2.compute_nlc(cosmo, zvec, n_redshift, kmodes, sizeof(kmodes)/sizeof(double));
-	}
+	ee2.compute_nlc(cosmo, zvec, n_redshift);
+	//ee2.compute_nlc(cosmo, zvec, n_redshift, kmodes, sizeof(kmodes)/sizeof(double));
+	printf("NLC computation complete\n");
+
+	/* Write result to file. Format: k [h/Mpc] B(k,z0) B(k,z1) ... B(k,zn) */
+	string filename = "my_nlc.dat";
+	ee2.write_nlc2file(filename, zvec, n_redshift);
+
 	std::cout << "EuclidEmulator2 >> Session closed... " << std::endl;
 	return 0;
 }
