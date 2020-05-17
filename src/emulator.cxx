@@ -88,8 +88,6 @@ void EuclidEmulator::read_in_ee2_data_file(){
 
 	// Check if all data has been read in properly
 	assert(idx == size/sizeof(double));
-
-	print_info();
 }
 
 /* 2D INTERPOLATION OF PRINCIPAL COMPONENTS */

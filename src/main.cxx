@@ -66,19 +66,18 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* Define cosmology struct */
-	printf("Defining cosmology...\n");
+	//printf("Defining cosmology...\n");
 	Cosmology cosmo = Cosmology(Omega_b, Omega_m, Sum_m_nu, n_s, h, w_0, w_a, A_s);
 
 
 	/* Initialize EE session */
-	printf("Construction of EuclidEmulator instance...\n");
+	//printf("Construction of EuclidEmulator instance...\n");
 	EuclidEmulator ee2 = EuclidEmulator();
 	std::cout << "EuclidEmulator2 >> Session started... " << std::endl;
 
 	/* compute NLCs for each cosmology */
 	ee2.compute_nlc(cosmo, zvec, n_redshift);
-	//ee2.compute_nlc(cosmo, zvec, n_redshift, kmodes, sizeof(kmodes)/sizeof(double));
-	printf("NLC computation complete\n");
+	printf("Computed the NLC at %d cosmology/ies and at %d different redshift(s).\n", 1, n_redshift);
 
 	/* Write result to file. Format: k [h/Mpc] B(k,z0) B(k,z1) ... B(k,zn) */
 	string filename = "my_nlc.dat";
