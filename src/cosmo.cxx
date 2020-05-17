@@ -247,8 +247,8 @@ void Cosmology::compute_z2nStep_spline(){
 	}
 
 	// Some sanity checks:
-	assert(frac_nStep[0] == 0);
-	assert(frac_nStep[this->nTable-1] == this->nSteps-1);
+	assert(abs(frac_nStep[0]) < EPSCOSMO);
+	assert(abs(frac_nStep[this->nTable-1] - (this->nSteps-1)) < EPSCOSMO);
 
 	// Step 2: Interpolate the array
 	gsl_spline_init(this->z2nStep_spline, avec, frac_nStep, this->nTable);
