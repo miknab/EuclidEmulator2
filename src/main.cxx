@@ -18,8 +18,8 @@ int main(int argc, char *argv[]) {
     double * w_0;
     double * w_a;
     double * A_s;
-
-	int n_redshift = 0, n_cosmologies = 0;
+	int * n_redshift;
+	int n_cosmologies = 0;
 	double ** zvec;
 	double * kmodes;
 
@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
 		A_s = new double[1];
 		zvec = new double*[1];
         zvec[0] = new double[50];
+		n_redshift = new int[1];
 
 		Omega_b[0] = atof(argv[1]);
 		Omega_m[0] = atof(argv[2]);
@@ -54,7 +55,7 @@ int main(int argc, char *argv[]) {
 
 		n_cosmologies = 1;
 
-		n_redshift = argc - 9;
+		n_redshift[0] = argc - 9;
 		//printf("Computing the NLC at %d different redshifts:\n", n_redshift);
 		string zvecstr = "zvec = ["; 
 		for(int i=9; i<argc; i++){
@@ -105,10 +106,10 @@ int main(int argc, char *argv[]) {
 		for(int i = 0; i < n_cosmologies; ++i){
 			zvec[i] = new double[50];
 		}
+		n_redshift = new int[n_cosmologies];
 
 		// Fill arrays
 		int linecntr = 0;
-		n_redshift = 1;
 		cosmofile = fopen(argv[1], "r");
 		bool read_next_line = true;
 		while(read_next_line){	
@@ -137,8 +138,16 @@ int main(int argc, char *argv[]) {
                 token = strtok(NULL, ",");
 				A_s[linecntr] = atof(token);
 
-                token = strtok(NULL, ",");
-				zvec[linecntr][0] = atof(token);
+				int idx = 0;
+				bool lookup_redshifts = true;
+				while (lookup_redshifts){
+                	token = strtok(NULL, ",");
+					printf("Redshifts: %s\n", token);
+					zvec[linecntr][idx] = atof(token);
+					idx++;
+					if (strstr(token, "\n") != NULL) lookup_redshifts = false;
+				}
+				n_redshift[linecntr] = idx;
 				linecntr++;
 			}
 			else{
@@ -163,11 +172,11 @@ int main(int argc, char *argv[]) {
 		Cosmology cosmo = Cosmology(Omega_b[cntr], Omega_m[cntr], Sum_m_nu[cntr], n_s[cntr], h[cntr], w_0[cntr], w_a[cntr], A_s[cntr]);
 
 		/* compute NLCs for each cosmology */
-		ee2.compute_nlc(cosmo, zvec[cntr], n_redshift);
+		ee2.compute_nlc(cosmo, zvec[cntr], n_redshift[cntr]);
 
 		/* Write result to file. Format: k [h/Mpc] B(k,z0) B(k,z1) ... B(k,zn) */
 		string filename = "my_nlc"+to_string(cntr)+".dat";
-		ee2.write_nlc2file(filename, zvec[cntr], n_redshift);
+		ee2.write_nlc2file(filename, zvec[cntr], n_redshift[cntr]);
 	}
 	std::cout << "EuclidEmulator2 >> Session closed... " << std::endl;
 	return 0;

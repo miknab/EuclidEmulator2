@@ -167,8 +167,7 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 }
 	
 /* WRITE NLC TO FILE */
-void EuclidEmulator::write_nlc2file(const string& filename, double * zvec, int n_redshift){
-	printf("Write %d columns\n", n_redshift);
+void EuclidEmulator::write_nlc2file(const string& filename, double * zvec, int n_redshift{
 	ofstream fp_out (filename);
 	// Writing an informative header line
 	string header = "#k [h/Mpc]";
