@@ -8,4 +8,4 @@ benchmark*.dat
 computeOmega_rad_for_massless_nu.py
 ee2.exe.dSYM/
 ee2_bindata.dat
-log10_boost
+Validation/*
