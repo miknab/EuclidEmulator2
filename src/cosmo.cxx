@@ -1,10 +1,11 @@
 #include <iostream>
+#include <iomanip>
 #include <assert.h>
 #include <math.h>
 #include "cosmo.h"
 #include "units_and_constants.h"
 
-#define EPSCOSMO 1e-7
+#define EPSCOSMO 1e-6
 #define LIMIT 1000
 
 //using namespace planck_units;
@@ -163,10 +164,11 @@ double Cosmology::Omega_nu(double a){
 	//printf("Setting up GSL integrator...\n");
 	F.function = &rho_nu_i_integrand;
 	F.params = &rho_nu_pars;
-	gsl_integration_qag(&F, 0, pmax, 0.0,
+	gsl_integration_qag(&F, 0.0, pmax, 0.0,
 						EPSCOSMO, LIMIT, GSL_INTEG_GAUSS61,
 						gsl_wsp, &rho_nu_i, &error); 
 
+	//printf("Omega_nu integration relative error = %.15e\n", error/rho_nu_i);
 	rho_nu_i *= prefactor;
 
 	//printf("GSL integration complete.\n");
@@ -220,6 +222,7 @@ double Cosmology::a2t(double a){
 						EPSCOSMO, LIMIT, GSL_INTEG_GAUSS61,
 						this->gsl_wsp, &result, &error);
 
+	//printf("a2t integration relative error = %.15e\n", error/result);
 	return result;
 }
 
@@ -284,7 +287,7 @@ void Cosmology::print_cosmo(){
     std::cout << std::endl;
 	std::cout << "Derived parameters:" << std::endl;
     std::cout << "\tT_nu = " << this->T_nu_0 << " K" << std::endl;
-    std::cout << "\tOmega_nu = " << this->Omega_nu_0 << std::endl;
+    std::cout << "\tOmega_nu = " << std::setprecision(12) << this->Omega_nu_0 << std::endl;
 	std::cout << "\tOmega_gamma = " << this->Omega_gamma_0 << std::endl;
 	std::cout << "\tOmega_DE = " << this->Omega_DE_0 << std::endl;
 	std::cout << "\trho_crit = " << this->rho_crit/(Msol/pow(Mpc,3)) << " h^2 M_sol/(Mpc^3)" << std::endl;
