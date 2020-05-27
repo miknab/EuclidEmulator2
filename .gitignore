@@ -2,5 +2,4 @@ misc/*
 **/*.exe
 my_nlc*.dat
 .DS_Store
-ee2_bindata.dat
 validation/*
