@@ -1,11 +1,6 @@
-code_for_myself/*
-valuable_info_for_later/*
+misc/*
 **/*.exe
-background.*
 my_nlc*.dat
-benchmark*.dat
 .DS_Store
-computeOmega_rad_for_massless_nu.py
-ee2.exe.dSYM/
 ee2_bindata.dat
-Validation/*
+validation/*
