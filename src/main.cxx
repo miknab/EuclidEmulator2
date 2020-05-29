@@ -3,10 +3,11 @@
 #include <stdlib.h>
 #include <string>
 #include <typeinfo>
-
 #include "emulator.h"
+#include "parse.h"
 
 int main(int argc, char *argv[]) {
+
 	const int nPCA = 15; //15 principal components
 	double * nlc;
 
@@ -27,7 +28,24 @@ int main(int argc, char *argv[]) {
     char instring[256];
 	char * token;
 
-	//for(int i = 0; i < 20; i++) zvec[0][i] = -1.0; 
+	bool bverbose;
+	string outfilename;
+
+	/* GET INPUT PARAMETERS */
+	ee2_parser(argc, argv);
+
+	// convert each option to its correct type and take action
+	Omega_b = new double[1];
+    Omega_m = new double[1];
+    Sum_m_nu = new double[1];
+    n_s = new double[1];
+    h = new double[1];
+    w_0 = new double[1];
+    w_a = new double[1];
+    A_s = new double[1];
+    zvec = new double*[1];
+    zvec[0] = new double[50];
+    n_redshift = new int[1];
 
 	/* GET COSMOLOGICAL PARAMETERS FROM STDIN OR FILE */
 	if (argc >= 10){
