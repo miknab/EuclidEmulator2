@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
 	/* Define cosmology struct */
 	//printf("Defining cosmology...\n");
 	for (int cntr = 0; cntr < n_cosmologies; cntr++){
-		/* Instatiate the Cosmology class */ 
+		/* Instatiate the Cosmology class */
 		Cosmology cosmo = Cosmology(CSM.Omega_b[cntr], CSM.Omega_m[cntr], \
 								    CSM.Sum_m_nu[cntr], CSM.n_s[cntr], CSM.h[cntr], \
 									CSM.w_0[cntr], CSM.w_a[cntr], CSM.A_s[cntr]);

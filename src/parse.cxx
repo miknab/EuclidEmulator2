@@ -13,15 +13,15 @@ csmpars ee2_parser(int n_args, char * vec_args[]){
     cxxopts::Options options("EuclidEmulator2", "Highly accurate and efficient AI-based \
 predictor of the non-linear correction of the matter power spectrum.");
     options.add_options()
-        ("b,Omega_b", "baryon density parameter", cxxopts::value< std::vector<double> >())
-        ("m,Omega_m", "(total) matter density parameter", cxxopts::value< std::vector<double> >())
-        ("s,Sum_m_nu", "sum of neutrino masses in eV", cxxopts::value< std::vector<double> >())
-        ("n,n_s", "spectral index", cxxopts::value< std::vector<double> >())
-        ("H,hubble", "dimensionless Hubble parameter", cxxopts::value< std::vector<double> >())
-        ("W,w_0", "time-independent dark energy equation-of-state parameter", cxxopts::value< std::vector<double> >())
-        ("w,w_a", "time-dependent dark energy equation-of-state parameter", cxxopts::value< std::vector<double> >())
-        ("A,A_s", "spectral amplitude", cxxopts::value< std::vector<double> >())
-        ("z,redshift", "redshift at which the NLC shall be computed", cxxopts::value< std::vector< std::vector<double> > >())
+        ("b,Omega_b", "baryon density parameter", cxxopts::value<double>())
+        ("m,Omega_m", "(total) matter density parameter", cxxopts::value<double >())
+        ("s,Sum_m_nu", "sum of neutrino masses in eV", cxxopts::value<double>())
+        ("n,n_s", "spectral index", cxxopts::value<double>())
+        ("H,hubble", "dimensionless Hubble parameter", cxxopts::value<double>())
+        ("W,w_0", "time-independent dark energy equation-of-state parameter", cxxopts::value<double>())
+        ("w,w_a", "time-dependent dark energy equation-of-state parameter", cxxopts::value<double>())
+        ("A,A_s", "spectral amplitude", cxxopts::value<double>())
+        ("z,redshift", "redshift at which the NLC shall be computed", cxxopts::value< std::vector< double > >())
         ("l,classfile", "path to CLASS parameter file", cxxopts::value<std::string>())
         ("a,cambfile", "path to CAMB parameter file", cxxopts::value<std::string>())
         ("p,parfile", "path to EE2 parameter file", cxxopts::value<std::string>())
@@ -53,6 +53,10 @@ predictor of the non-linear correction of the matter power spectrum.");
 	// If the cosmology shall be read from a file, then no cosmological parameter
 	// may be defined on the command line
 	if (n_cosmo_pars > 0){
+		if (n_cosmo_pars < 8){
+			printf("Cosmology not fully defined!\n");
+			exit(1);
+		}
 		read_cosmo_from_cmdline(result, CSM);
 	}
 	if (result.count("classfile")){
@@ -71,38 +75,38 @@ predictor of the non-linear correction of the matter power spectrum.");
 	return CSM;
 }
 
-void read_cosmo_from_cmdline(cxxopts::ParseResult result, csmpars CSM){
-	printf("Reading cosmology from command line...\n");
+void read_cosmo_from_cmdline(cxxopts::ParseResult result, csmpars &CSM){
+	std::cout << "Reading cosmology from command line..." << std::endl;
 
 	if (result.count("Omega_b")){
-        CSM.Omega_b = result["Omega_b"].as< std::vector<double> >();
+		CSM.Omega_b.push_back(result["Omega_b"].as<double>());
     }
     if (result.count("Omega_m")){
-        CSM.Omega_m = result["Omega_m"].as< std::vector<double> >();
+        CSM.Omega_m.push_back(result["Omega_m"].as<double>());
     }
     if (result.count("Sum_m_nu")){
-        CSM.Sum_m_nu = result["Sum_m_nu"].as< std::vector<double> >();
+        CSM.Sum_m_nu.push_back(result["Sum_m_nu"].as<double>());
     }
     if (result.count("n_s")){
-        CSM.n_s = result["n_s"].as< std::vector<double> >();
+        CSM.n_s.push_back(result["n_s"].as<double>());
     }
     if (result.count("hubble")){
-        CSM.h = result["hubble"].as< std::vector<double> >();
+        CSM.h.push_back(result["hubble"].as<double>());
     }
     if (result.count("w_0")){
-        CSM.w_0 = result["w_0"].as< std::vector<double> >();
+        CSM.w_0.push_back(result["w_0"].as<double>());
     }
 	if (result.count("w_a")){
-        CSM.w_a = result["w_a"].as< std::vector<double> >();
+        CSM.w_a.push_back(result["w_a"].as<double>());
     }
     if (result.count("A_s")){
-        CSM.A_s = result["A_s"].as< std::vector<double> >();
+        CSM.A_s.push_back(result["A_s"].as<double>());
     }
     if (result.count("redshift")){
 		std::string zvecstr = "zvec = [";
-		std::vector<double> z_tmp;
 		CSM.n_redshift.push_back(result.count("redshift"));
-        CSM.zvec.push_back(result["redshift"].as<std::vector<double> >()); 
+		std::vector<double> ztmp = result["redshift"].as< std::vector<double> >();
+        CSM.zvec.push_back(ztmp); 
         for(int i=0; i<CSM.n_redshift.at(0); i++){
             zvecstr.append(std::to_string(CSM.zvec.at(0).at(i)));
             if (i != CSM.n_redshift.at(0)-1) {
@@ -114,14 +118,14 @@ void read_cosmo_from_cmdline(cxxopts::ParseResult result, csmpars CSM){
     }
 }
 
-void read_classfile(std::string class_file_name, csmpars CSM){
+void read_classfile(std::string class_file_name, csmpars &CSM){
     printf("Reading cosmology from CLASS file...\n");
 }
 
-void read_cambfile(std::string camb_file_name, csmpars CSM){
+void read_cambfile(std::string camb_file_name, csmpars &CSM){
     printf("Reading cosmology from CAMB file...\n");
 }
 
-void read_parfile(std::string par_file_name, csmpars CSM){
+void read_parfile(std::string par_file_name, csmpars &CSM){
     printf("Reading cosmology from EE2 parameter file...\n");
 }

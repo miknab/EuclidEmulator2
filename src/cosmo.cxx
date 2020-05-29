@@ -64,11 +64,6 @@ Cosmology::Cosmology(double Omega_b, double Omega_m, double Sum_m_nu, double n_s
 	print_cosmo_tf();
 }
 
-/* DESTRUCTOR */
-/*Cosmology::~Cosmology(){
-    gsl_integration_workspace_free(this->gsl_wsp);
-    gsl_spline_free(z2nStep_spline);
-}*/
 
 /* CHECK PARAMETER RANGES */
 void Cosmology::check_parameter_ranges(){
