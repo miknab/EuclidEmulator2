@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 		// We can only read one single cosmology from the command line
 		n_cosmologies = 1;
 		// There my be many redshift values though
-		n_redshift[0] = argc - 9;
+		n_redshift.push_back(argc - 9);
 		// Store the cosmological parameters into the respective variables
 		// --> the variables will now be double-vectors of length 1
 		Omega_b.push_back(atof(argv[1]));
@@ -49,12 +49,12 @@ int main(int argc, char *argv[]) {
 		w_a.push_back(atof(argv[7]));
 		A_s.push_back(atof(argv[8]));
 
-		//printf("Computing the NLC at %d different redshifts:\n", n_redshift);
+		printf("Computing the NLC at %d different redshifts:\n", n_redshift.at(0));
 		string zvecstr = "zvec = ["; 
 		vector<double> z_tmp;
 		for(int i=9; i<argc; i++){
 			z_tmp.push_back(atof(argv[i]));
-			zvecstr.append(to_string(zvec[0][i-9]));
+			zvecstr.append(argv[i]);
 			if (i != argc-1) {
 				zvecstr.append(", ");
 			}
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
 					if (strstr(token, "\n") != NULL) reached_end_of_line = true;
 				}
 				zvec.push_back(z_tmp);
-				n_redshift.push_back(zvec.size()); 
+				n_redshift.push_back(z_tmp.size()); 
 				linecntr++;
 			}
 			else{
