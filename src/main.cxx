@@ -3,26 +3,28 @@
 #include <stdlib.h>
 #include <string>
 #include <typeinfo>
+#include <vector>
 #include "emulator.h"
 #include "parse.h"
+
+using namespace std; // contains std::vector, std::cout, std::cin etc
 
 int main(int argc, char *argv[]) {
 
 	const int nPCA = 15; //15 principal components
-	double * nlc;
-
-    double * Omega_b;
-    double * Omega_m;
-    double * Sum_m_nu;
-    double * n_s;
-    double * h;
-    double * w_0;
-    double * w_a;
-    double * A_s;
-	int * n_redshift;
+	vector<double> nlc;
+	vector<double> Omega_b;
+    vector<double> Omega_m;
+    vector<double> Sum_m_nu;
+    vector<double> n_s;
+    vector<double> h;
+    vector<double> w_0;
+    vector<double> w_a;
+    vector<double> A_s;
+	vector<int> n_redshift;
 	int n_cosmologies = 0;
-	double ** zvec;
-	double * kmodes;
+	vector< vector<double> > zvec;
+	vector<double> kmodes;
 
 	FILE * cosmofile;
     char instring[256];
@@ -50,39 +52,32 @@ int main(int argc, char *argv[]) {
 	/* GET COSMOLOGICAL PARAMETERS FROM STDIN OR FILE */
 	if (argc >= 10){
 		printf("Reading from stdin...\n");
-		Omega_b = new double[1];
-		Omega_m = new double[1];
-		Sum_m_nu = new double[1];
-		n_s = new double[1];
-		h = new double[1];
-		w_0 = new double[1];
-		w_a = new double[1];
-		A_s = new double[1];
-		zvec = new double*[1];
-        zvec[0] = new double[50];
-		n_redshift = new int[1];
-
-		Omega_b[0] = atof(argv[1]);
-		Omega_m[0] = atof(argv[2]);
-		Sum_m_nu[0] = atof(argv[3]);
-		n_s[0] = atof(argv[4]);
-		h[0] = atof(argv[5]);
-		w_0[0] = atof(argv[6]);
-		w_a[0] = atof(argv[7]);
-		A_s[0] = atof(argv[8]);
-
+		// We can only read one single cosmology from the command line
 		n_cosmologies = 1;
+		// There my be many redshift values though
+		n_redshift.push_back(argc - 9);
+		// Store the cosmological parameters into the respective variables
+		// --> the variables will now be double-vectors of length 1
+		Omega_b.push_back(atof(argv[1]));
+		Omega_m.push_back(atof(argv[2]));
+		Sum_m_nu.push_back(atof(argv[3]));
+		n_s.push_back(atof(argv[4]));
+		h.push_back(atof(argv[5]));
+		w_0.push_back(atof(argv[6]));
+		w_a.push_back(atof(argv[7]));
+		A_s.push_back(atof(argv[8]));
 
-		n_redshift[0] = argc - 9;
-		//printf("Computing the NLC at %d different redshifts:\n", n_redshift);
+		printf("Computing the NLC at %d different redshifts:\n", n_redshift.at(0));
 		string zvecstr = "zvec = ["; 
+		vector<double> z_tmp;
 		for(int i=9; i<argc; i++){
-			zvec[0][i-9] = atof(argv[i]);
-			zvecstr.append(to_string(zvec[0][i-9]));
+			z_tmp.push_back(atof(argv[i]));
+			zvecstr.append(argv[i]);
 			if (i != argc-1) {
 				zvecstr.append(", ");
 			}
 		}
+		zvec.push_back(z_tmp);
 		zvecstr.append("]");
 		cout << zvecstr << endl;
 	}
@@ -111,61 +106,49 @@ int main(int argc, char *argv[]) {
 		fclose(cosmofile);
 		std::cout << "There are " << n_cosmologies << " cosmologies specified in the input file" << endl;	
 
-		// Reallocate arrays for cosmological parameters
-		Omega_b = new double[n_cosmologies];
-		Omega_m = new double[n_cosmologies];
-		Sum_m_nu = new double[n_cosmologies];
-		n_s = new double[n_cosmologies];
-		h = new double[n_cosmologies];
-		w_0 = new double[n_cosmologies];
-		w_a = new double[n_cosmologies];
-		A_s = new double[n_cosmologies];
-		zvec = new double*[n_cosmologies];
-		for(int i = 0; i < n_cosmologies; ++i){
-			zvec[i] = new double[50];
-		}
-		n_redshift = new int[n_cosmologies];
-
 		// Fill arrays
 		int linecntr = 0;
 		cosmofile = fopen(argv[1], "r");
 		bool read_next_line = true;
 		while(read_next_line){	
 			if (fgets(instring, 256, cosmofile) != NULL){	
+				//Remark: Don't forget to split (i.e. tokenize) each
+				//        line into its individual parameters
 				token = strtok(instring, ",");
-				Omega_b[linecntr] = atof(token);
+				Omega_b.push_back(atof(token));
 
 				token = strtok(NULL, ",");
-				Omega_m[linecntr] = atof(token);
+				Omega_m.push_back(atof(token));
 
                 token = strtok(NULL, ",");
-				Sum_m_nu[linecntr] = atof(token);
+				Sum_m_nu.push_back(atof(token));
 
                 token = strtok(NULL, ",");
-				n_s[linecntr] = atof(token);
+				n_s.push_back(atof(token));
 
                 token = strtok(NULL, ",");
-				h[linecntr] = atof(token);
+				h.push_back(atof(token));
 
                 token = strtok(NULL, ",");
-				w_0[linecntr] = atof(token);
+				w_0.push_back(atof(token));
 
                 token = strtok(NULL, ",");
-				w_a[linecntr] = atof(token);
+				w_a.push_back(atof(token));
 
                 token = strtok(NULL, ",");
-				A_s[linecntr] = atof(token);
+				A_s.push_back(atof(token));
 
-				int idx = 0;
-				bool lookup_redshifts = true;
-				while (lookup_redshifts){
+				// Read the rest of the line as individual redshifts:
+				vector<double> z_tmp;
+				bool reached_end_of_line = false;
+				while (!reached_end_of_line){	
                 	token = strtok(NULL, ",");
 					printf("Redshifts: %s\n", token);
-					zvec[linecntr][idx] = atof(token);
-					idx++;
-					if (strstr(token, "\n") != NULL) lookup_redshifts = false;
+					z_tmp.push_back(atof(token));
+					if (strstr(token, "\n") != NULL) reached_end_of_line = true;
 				}
-				n_redshift[linecntr] = idx;
+				zvec.push_back(z_tmp);
+				n_redshift.push_back(z_tmp.size()); 
 				linecntr++;
 			}
 			else{

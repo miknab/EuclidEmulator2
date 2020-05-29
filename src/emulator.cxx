@@ -108,7 +108,7 @@ void EuclidEmulator::pc_2d_interp(){
 
 /* COMPUTE NLC */
 //void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift, double* kmodes, int n_kmodes){	
-void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift){
+void EuclidEmulator::compute_nlc(Cosmology csm, vector<double> redshift, int n_redshift){
 	double pc_weight;
 	double basisfunc;
 	double stp_no[n_redshift];
@@ -117,8 +117,8 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 	// As we are looping through all redshifts anyway, we can just 
 	// as well use the same loop to declare Bvec[iz]
 	for(int iz=0; iz<n_redshift; iz++) {
-		stp_no[iz] = csm.compute_step_number(redshift[iz]);
-        //printf("nStep(%.2f) = %.4f\n", redshift[iz], stp_no[iz]);
+		stp_no[iz] = csm.compute_step_number(redshift.at(iz));
+        //printf("nStep(%.2f) = %.4f\n", redshift.at(iz), stp_no[iz]);
 	}
 	//printf("Redshifts mapped to nStep\n");
 
@@ -137,7 +137,7 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 		for(int ik=0; ik<nk; ik++){
 			Bvec[iz][ik] = gsl_spline2d_eval(logklogz2pc_spline[0], log(this->kvec[ik]), stp_no[iz], logk2pc_acc[0], logz2pc_acc[0]);
 		}
-		//printf("B(k_max, z=%.2f) = %.2f\n", redshift[iz], Bvec[iz][nk-1]);
+		//printf("B(k_max, z=%.2f) = %.2f\n", redshift.at(iz), Bvec[iz][nk-1]);
 	}
 	//printf("PCA initialized\n");
 
@@ -156,18 +156,17 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 		// assemble PCA to get the final NLC according
         // to outer sum of eq. 27 in EE2 paper
 		for(int iz=0; iz<n_redshift; iz++){
-			//printf("Treating z[%d] = %.3f ==> nStep = %.3f\n", iz, redshift[iz], stp_no[iz]); 
+			//printf("Treating z[%d] = %.3f ==> nStep = %.3f\n", iz, redshift.at(iz), stp_no[iz]); 
 			for(int ik=0; ik<nk; ik++){
 				Bvec[iz][ik] += (pc_weight*gsl_spline2d_eval(logklogz2pc_spline[ipc], log(this->kvec[ik]), stp_no[iz], logk2pc_acc[ipc], logz2pc_acc[ipc]));
 			}
 		}
 	}
-	
 	//printf("PCA assembled\n");
 }
 	
 /* WRITE NLC TO FILE */
-void EuclidEmulator::write_nlc2file(const string& filename, double * zvec, int n_redshift){
+void EuclidEmulator::write_nlc2file(const string& filename, vector<double> zvec, int n_redshift){
 	ofstream fp_out (filename);
 	// Writing an informative header line
 	string header = "#k [h/Mpc]";
