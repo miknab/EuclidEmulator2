@@ -3,25 +3,27 @@
 #include <stdlib.h>
 #include <string>
 #include <typeinfo>
+#include <vector>
 
 #include "emulator.h"
 
+using namespace std; // contains std::vector, std::cout, std::cin etc
+
 int main(int argc, char *argv[]) {
 	const int nPCA = 15; //15 principal components
-	double * nlc;
-
-    double * Omega_b;
-    double * Omega_m;
-    double * Sum_m_nu;
-    double * n_s;
-    double * h;
-    double * w_0;
-    double * w_a;
-    double * A_s;
-	int * n_redshift;
+	vector<double> nlc;
+	vector<double> Omega_b;
+    vector<double> Omega_m;
+    vector<double> Sum_m_nu;
+    vector<double> n_s;
+    vector<double> h;
+    vector<double> w_0;
+    vector<double> w_a;
+    vector<double> A_s;
+	vector<int> n_redshift;
 	int n_cosmologies = 0;
-	double ** zvec;
-	double * kmodes;
+	vector< vector<double> > zvec;
+	vector<double> kmodes;
 
 	FILE * cosmofile;
     char instring[256];
@@ -32,30 +34,21 @@ int main(int argc, char *argv[]) {
 	/* GET COSMOLOGICAL PARAMETERS FROM STDIN OR FILE */
 	if (argc >= 10){
 		printf("Reading from stdin...\n");
-		Omega_b = new double[1];
-		Omega_m = new double[1];
-		Sum_m_nu = new double[1];
-		n_s = new double[1];
-		h = new double[1];
-		w_0 = new double[1];
-		w_a = new double[1];
-		A_s = new double[1];
-		zvec = new double*[1];
-        zvec[0] = new double[50];
-		n_redshift = new int[1];
-
-		Omega_b[0] = atof(argv[1]);
-		Omega_m[0] = atof(argv[2]);
-		Sum_m_nu[0] = atof(argv[3]);
-		n_s[0] = atof(argv[4]);
-		h[0] = atof(argv[5]);
-		w_0[0] = atof(argv[6]);
-		w_a[0] = atof(argv[7]);
-		A_s[0] = atof(argv[8]);
-
+		// We can only read one single cosmology from the command line
 		n_cosmologies = 1;
-
+		// There my be many redshift values though
 		n_redshift[0] = argc - 9;
+		// Store the cosmological parameters into the respective variables
+		// --> the variables will now be double-vectors of length 1
+		Omega_b.push_back(atof(argv[1]));
+		Omega_m.push_back(atof(argv[2]));
+		Sum_m_nu.push_back(atof(argv[3]));
+		n_s.push_back(atof(argv[4]));
+		h.push_back(atof(argv[5]));
+		w_0.push_back(atof(argv[6]));
+		w_a.push_back(atof(argv[7]));
+		A_s.push_back(atof(argv[8]));
+
 		//printf("Computing the NLC at %d different redshifts:\n", n_redshift);
 		string zvecstr = "zvec = ["; 
 		for(int i=9; i<argc; i++){
