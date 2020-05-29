@@ -4,6 +4,7 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline2d.h>
 #include <fstream>
+#include <vector>
 #include "cosmo.h"
 
 using namespace std;
@@ -41,9 +42,8 @@ class EuclidEmulator{
 		/* Public member functions */
 		EuclidEmulator();
 		~EuclidEmulator();
-		//void compute_nlc(Cosmology csm, double *redshift, int n_redshift, double *kmodes, int n_kmodes);
-		void compute_nlc(Cosmology csm, double *redshift, int n_redshift);
-		void write_nlc2file(const string& filename, double * zvec, int n_redshift);
+		void compute_nlc(Cosmology csm, vector<double> redshift, int n_redshift);
+		void write_nlc2file(const string &filename, vector<double> zvec, int n_redshift);
 };
 
 #endif

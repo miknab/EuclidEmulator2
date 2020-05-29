@@ -108,7 +108,7 @@ void EuclidEmulator::pc_2d_interp(){
 
 /* COMPUTE NLC */
 //void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift, double* kmodes, int n_kmodes){	
-void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift){
+void EuclidEmulator::compute_nlc(Cosmology csm, vector<double> redshift, int n_redshift){
 	double pc_weight;
 	double basisfunc;
 	double stp_no[n_redshift];
@@ -167,7 +167,7 @@ void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift
 }
 	
 /* WRITE NLC TO FILE */
-void EuclidEmulator::write_nlc2file(const string& filename, double * zvec, int n_redshift){
+void EuclidEmulator::write_nlc2file(const string& filename, vector<double> zvec, int n_redshift){
 	ofstream fp_out (filename);
 	// Writing an informative header line
 	string header = "#k [h/Mpc]";
