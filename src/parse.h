@@ -4,10 +4,23 @@
 #include <string>
 #include <cxxopts.hpp>
 
-void read_cosmo_from_cmdline();//double Omega_b, double Omega_m, double Sum_m_nu, double n_s, double h, double w_0, double w_a, double A_s, vector<double> z);
+struct csmpars {
+	int verbosity_level;
+	std::vector<double> Omega_b;
+    std::vector<double> Omega_m;
+    std::vector<double> Sum_m_nu;
+    std::vector<double> n_s;
+    std::vector<double> h;
+    std::vector<double> w_0;
+    std::vector<double> w_a;
+    std::vector<double> A_s;
+    std::vector<int> n_redshift;
+    std::vector< std::vector<double> > zvec;
+	std::string outfilename;
+};
 
-void read_classfile(string class_file_name);//d, double Omega_b, double Omega_m, double Sum_m_nu, double n_s, double h, double w_0, double w_a, double A_s, vector<double> z);
-
-void read_cambfile(string camb_file_name);//d, double Omega_b, double Omega_m, double Sum_m_nu, double n_s, double h, double w_0, double w_a, double A_s, vector<double> z);
-
-void read_parfile(string par_file_name);//d, double Omega_b, double Omega_m, double Sum_m_nu, double n_s, double h, double w_0, double w_a, double A_s, vector<double> z);
+csmpars ee2_parser(int n_args, char * vec_args[]);
+void read_cosmo_from_cmdline(cxxopts::ParseResult result, csmpars CSM);
+void read_classfile(std::string class_file_name, csmpars CSM);
+void read_cambfile(std::string camb_file_name, csmpars CSM);
+void read_parfile(std::string par_file_name, csmpars CSM);
