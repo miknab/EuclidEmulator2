@@ -26,7 +26,8 @@ predictor of the non-linear correction of the matter power spectrum.");
         ("l,classfile", "path to CLASS parameter file", cxxopts::value<std::string>())
         ("a,cambfile", "path to CAMB parameter file", cxxopts::value<std::string>())
         ("p,parfile", "path to EE2 parameter file", cxxopts::value<std::string>())
-        ("o,outfile", "path to output file", cxxopts::value<std::string>())
+        ("o,outfile", "output file name", cxxopts::value<std::string>()->default_value("nlc"))
+		("d,outdir", "output directory", cxxopts::value<std::string>()->default_value("results"))
         ("v,verbosity", "verbosity level (0, 1 or 2)", cxxopts::value<int>()->default_value("0"))
         ("h,help", "Print usage");
 
