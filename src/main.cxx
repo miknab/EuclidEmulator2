@@ -20,13 +20,11 @@ int main(int argc, char *argv[]) {
 	n_cosmologies = CSM.Omega_b.size();
 	std::cout << "There are " << n_cosmologies << " cosmologies specified in the input." << std::endl;
 
-	/* Initialize EE session */
-    //printf("Construction of EuclidEmulator instance...\n");
+	/* INITIALIZE EE2 SESSION */
     EuclidEmulator ee2 = EuclidEmulator();
     std::cout << "EuclidEmulator2 >> Session started... " << std::endl;
 
-	/* Define cosmology struct */
-	//printf("Defining cosmology...\n");
+	/* ITERATE THROUGH COSMOLOGIES */
 	for (int cntr = 0; cntr < n_cosmologies; cntr++){
 		/* Instatiate the Cosmology class */
 		Cosmology cosmo = Cosmology(CSM.Omega_b[cntr], CSM.Omega_m[cntr], \
@@ -40,6 +38,8 @@ int main(int argc, char *argv[]) {
 		string filename = "my_nlc"+to_string(cntr)+".dat";
 		ee2.write_nlc2file(filename, CSM.zvec[cntr], CSM.n_redshift[cntr]);
 	}
+
+	/* CLOSE EE2 SESSION (no explicit destructor required)*/
 	std::cout << "EuclidEmulator2 >> Session closed... " << std::endl;
 	return 0;
 }
