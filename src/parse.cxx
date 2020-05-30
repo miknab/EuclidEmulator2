@@ -1,6 +1,7 @@
 #include <parse.h>
 #include <assert.h>
 
+
 csmpars ee2_parser(int n_args, char * vec_args[]){
 	size_t n_cosmo_pars;
 	csmpars CSM;
@@ -128,4 +129,74 @@ void read_cambfile(std::string camb_file_name, csmpars &CSM){
 
 void read_parfile(std::string par_file_name, csmpars &CSM){
     printf("Reading cosmology from EE2 parameter file...\n");
+
+	FILE * cosmofile;
+    char instring[256];
+    char * token;
+        
+	// Open parameter file (and check for success):
+	cosmofile = fopen(par_file_name.c_str(), "r");
+	if(cosmofile == NULL){
+        std::cout << "Could not open cosmology file " <<  par_file_name << std::endl;
+        std::cout << "Please make sure the command line argument list follows the format: " << std::endl;
+        std::cout << std::endl;
+        std::cout << "  ./ee2.exe [/path/to/cosmology/file]" << std::endl;
+        std::cout << "or" << std::endl;
+        std::cout << "  ./ee2.exe [Omega_b] [Omega_m] [Sum m_nu] [n_s] [h] [w_0] [w_a] [A_s] [z_1] ... [z_n]" << std::endl;
+        exit(1);
+    }
+
+	// Fill arrays
+	int linecntr = 0;
+	bool read_next_line = true;
+	while(read_next_line){  
+		if (fgets(instring, 256, cosmofile) != NULL){   
+			//Ignore the line if it is a comment
+			if (instring[0] == '#'){
+            	continue;
+        	}
+			//Remark: Don't forget to split (i.e. tokenize) each
+			//        line into its individual parameters
+			token = strtok(instring, ",");
+			CSM.Omega_b.push_back(atof(token));
+
+			token = strtok(NULL, ",");
+			CSM.Omega_m.push_back(atof(token));
+
+			token = strtok(NULL, ",");
+			CSM.Sum_m_nu.push_back(atof(token));
+
+			token = strtok(NULL, ",");
+			CSM.n_s.push_back(atof(token));
+
+			token = strtok(NULL, ",");
+			CSM.h.push_back(atof(token));
+
+			token = strtok(NULL, ",");
+			CSM.w_0.push_back(atof(token));
+
+			token = strtok(NULL, ",");
+			CSM.w_a.push_back(atof(token));
+
+			token = strtok(NULL, ",");
+			CSM.A_s.push_back(atof(token));
+
+			// Read the rest of the line as individual redshifts:
+			std::vector<double> z_tmp;
+			bool reached_end_of_line = false;
+			while (!reached_end_of_line){   
+				token = strtok(NULL, ",");
+				printf("Redshifts: %s\n", token);
+				z_tmp.push_back(atof(token));
+				if (strstr(token, "\n") != NULL) reached_end_of_line = true;
+			}
+			CSM.zvec.push_back(z_tmp);
+			CSM.n_redshift.push_back(z_tmp.size()); 
+			linecntr++;
+		}
+		else{
+			read_next_line = false;
+		}   
+	}
+	fclose(cosmofile);
 }
