@@ -162,6 +162,7 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 	bool little_omegab_defined = false;
 	bool little_omegacdm_defined = false;
 	bool mnu_defined = false;
+	bool Omega_ncdm_defined = false;
 	bool As_defined = false;
     while(read_next_line){
         if (fgets(instring, 256, classfile) != NULL){
@@ -178,28 +179,32 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 			// Baryon density parameter: 
 			if (starts_with(current_line, "Omega_b =") || starts_with(current_line, "Omega_b=")){
 				if(little_omegacdm_defined){
-					std::cout << "Please don't mix definitions of capital and lower-case Omega's." << std::endl;
+					std::cout << "\n==> ERROR <==: Please don't mix definitions of capital and lower-case Omega's." << std::endl;
+					exit(1);
 				}
 				CSM.Omega_b.push_back(extract_value(current_line));
             }
 			if (starts_with(current_line, "omega_b =") || starts_with(current_line, "omega_b=")){
-				if(!little_omegacdm_defined){
-                    std::cout << "Please don't mix definitions of capital and lower-case Omega's." << std::endl;
-                }
+				//if(!little_omegacdm_defined){
+                //    std::cout << "\n==> ERROR <==: Please don't mix definitions of capital and lower-case Omega's." << std::endl;
+                //    exit(1);
+                //}
 				CSM.Omega_b.push_back(extract_value(current_line));
 				little_omegab_defined=true;
 			}
 			// Cold dark matter (CDM) density parameter:
 			if (starts_with(current_line, "Omega_cdm =") || starts_with(current_line, "Omega_cdm=")){
 				if(little_omegab_defined){
-                    std::cout << "Please don't mix definitions of capital and lower-case Omega's." << std::endl;
+                    std::cout << "\n==> ERROR <==: Please don't mix definitions of capital and lower-case Omega's." << std::endl;
+                    exit(1);
                 }
                 Omega_cdm = extract_value(current_line);
             }
 			if (starts_with(current_line, "omega_cdm =") || starts_with(current_line, "omega_cdm=")){
-				if(!little_omegab_defined){
-                    std::cout << "Please don't mix definitions of capital and lower-case Omega's." << std::endl;
-                }
+				//if(!little_omegab_defined){
+                //    std::cout << "\n==> ERROR <==: Please don't mix definitions of capital and lower-case Omega's." << std::endl;
+                //    exit(1);
+                //}
                 Omega_cdm = extract_value(current_line);
                 little_omegacdm_defined=true;
 			}
@@ -217,14 +222,20 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
     				value_str.erase(0, pos + delimiter.length());
 					cntr++;
 				}
+				m_nu[cntr] = extract_value(value_str);
+				tot_m_nu += m_nu[cntr];
+
 				if (m_nu[0] != m_nu[1] || m_nu[0] != m_nu[2] || m_nu[0] != m_nu[2]){
-					std::cout << "WARNING: You have defined a non-degenerate hierarchy of neutrino mass\n" \
-							  << "eigenstates. This hierarchy will be ignored. EuclidEmulator2 always\n" \
-							  << "assumes a degenerate hierarchy of neutrino mass eigenstates." << std::endl;
+					std::cout << "\n--> WARNING <--: You have defined a non-degenerate hierarchy of neutrino mass\n" \
+							  << "                 eigenstates. This hierarchy will be ignored. EuclidEmulator2 always\n" \
+							  << "                 assumes a degenerate hierarchy of neutrino mass eigenstates." << std::endl;
 				}
                 CSM.Sum_m_nu.push_back(tot_m_nu);
 				mnu_defined = true;
        		}
+			if (starts_with(current_line, "Omega_ncdm =") || starts_with(current_line, "Omega_ncdm=")){
+                Omega_ncdm_defined = true;
+            }
 			// spectral index:
 			if (starts_with(current_line, "n_s =") || starts_with(current_line, "n_s=")){
                 CSM.n_s.push_back(extract_value(current_line));
@@ -240,23 +251,31 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 			// spectral amplitude:
 			if (starts_with(current_line, "A_s =") || starts_with(current_line, "A_s=")){
                 CSM.A_s.push_back(extract_value(current_line));
+				As_defined = true;
             }
 			// redshifts:
 			if (starts_with(current_line, "z_pk =") || starts_with(current_line, "z_pk=")){
 				std::string token, value_str = current_line.substr(current_line.find("=")+1), delimiter = ",";
                 size_t pos = 0;
-				std::vector<double> z_tmp;
+				std::vector<double> z_tmp; // auxiliary vector (zvec is a matrix, z_tmp a row of this matrix)
+				CSM.n_redshift.push_back(0);
+				// Iterate through the list until only the last entry is left,
+				// i.e. no more delimiters can be found:
                 while ((pos = value_str.find(delimiter)) != std::string::npos) {
+					CSM.n_redshift.at(0)++; //count the number of list items
                     token = value_str.substr(0, pos);
 					z_tmp.push_back(atof(token.c_str()));
                     value_str.erase(0, pos + delimiter.length());
                 }
+				// Don't forget to add the last redshift in the list to the vector:
+				CSM.n_redshift.at(0)++;
+				z_tmp.push_back(atof(value_str.c_str()));
 				CSM.zvec.push_back(z_tmp);
             }
 			// Check parameters implicitly defined in EE2:
 			if (starts_with(current_line, "Omega_k =") || starts_with(current_line, "Omega_k=")){
                 if(extract_value(current_line) != 0.0 ){
-					std::cout << "The defined cosmology is non-flat. Please set Omega_k = 0.0." << std::endl;
+					std::cout << "\n==> ERROR <==: The defined cosmology is non-flat. Please set Omega_k = 0.0." << std::endl;
 					exit(1);
 				}
             }
@@ -266,6 +285,15 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
         }
 	}
 	fclose(classfile);
+	// Fill unspecified DE parameters:
+	if (CSM.w_0.size() == 0){
+		std::cout << "\n--> WARNING <--: w_0 is not specified --> set to -1.0." << std::endl; 
+		CSM.w_0.push_back(-1.0);
+	}
+	if (CSM.w_a.size() == 0){
+		std::cout << "\n--> WARNING <--: w_a is not specified --> set to 0.0." << std::endl;
+		CSM.w_a.push_back(0.0);
+	} 
 	// Compute matter density parameter;
 	CSM.Omega_m.push_back(Omega_cdm + CSM.Omega_b.at(0)); // Notice that here boh Omega and omega can be stored.
 	// Convert from omega to Omega (if necessary):
@@ -273,20 +301,26 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 	if (hubble_defined && little_omegab_defined && little_omegacdm_defined) CSM.Omega_m.at(0) /= pow(CSM.h.at(0),2);
 	// Check if all necessary parameters are defined:
 	if (!hubble_defined){
-        std::cout << "ERROR: You have not explicitely defined the Hubble parameter. Please do so! \n" \
-                  << "EuclidEmulator2 does not accept the peak scale parameter theta_s as an alternative\n" \
-                  << "to specifying H0 or h, respectively." << std::endl;
+        std::cout << "\n==> ERROR <==: You have not explicitely defined the Hubble parameter. Please do so! \n" \
+                  << "               EuclidEmulator2 does not accept the peak scale parameter theta_s as an alternative\n" \
+                  << "               to specifying H0 or h, respectively." << std::endl;
         exit(1);
     }
 	if (!mnu_defined){
-        std::cout << "ERROR: You have not explicitely defined the neutrino mass eigenstates. Please do so! \n" \
-                  << "Alternative specifications of the neutrino content (e.g. through Omega_ncdm) are not \n" \
-				  << "accepted by EuclidEmulator2." << std::endl;
-        exit(1);
+		if (Omega_ncdm_defined){
+        	std::cout << "\n==> ERROR <==: You have not explicitely defined the neutrino mass eigenstates. Please do so! \n" \
+            	      << "               Alternative specifications of the neutrino content (e.g. through Omega_ncdm) are not \n" \
+					  << "               accepted by EuclidEmulator2." << std::endl;
+        	exit(1);
+		}else{
+			std::cout << "\n--> WARNING <--: Neither neutrino mass eigenstates nor a neutrino density parameter have been\n" \
+					  << "                 specified. Hence we assume only massless neutrinos: Sum m_nu = 0.0 eV." << std::endl;
+			CSM.Sum_m_nu.push_back(0.0);
+		}
     }
 	if (!As_defined){
-		std::cout << "ERROR: You have not explicitely defined the spectral amplitude A_s. Please do so! \n" \
-				  << "Alternative normalizations (as e.g. sigma_8) are not accepted by EuclidEmulator2." << std::endl;
+		std::cout << "\n==> ERROR <==: You have not explicitely defined the spectral amplitude A_s. Please do so! \n" \
+				  << "               Alternative normalizations (as e.g. sigma_8) are not accepted by EuclidEmulator2." << std::endl;
 		exit(1); 
 	}
 }
