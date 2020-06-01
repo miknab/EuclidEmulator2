@@ -3,3 +3,5 @@ misc/*
 my_nlc*.dat
 .DS_Store
 validation/*
+*.swp
+*.ini
