@@ -47,6 +47,7 @@ Cosmology::Cosmology(double Omega_b, double Omega_m, double Sum_m_nu, double n_s
 	this->Omega_gamma_0 = Omega_gamma(1.0);
 	this->Omega_DE_0 = 1 - (this->cosmo[1] + this->Omega_gamma_0 + this->Omega_nu_0);
 
+	//printf("Cosmological parameters assigned successfully\n");
 	// Prepare for spline interpolation of z --> nStep mapping:
 	t0  = a2t(1.0); // proper time at z = 0 (or equivalently a = 1) 
     t10 = a2t(1.0/(10+1)); // proper time at z = 10 (or equivalently a = 0.090909...)
