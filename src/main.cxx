@@ -57,7 +57,8 @@ int main(int argc, char *argv[]) {
 		ee2.compute_nlc(cosmo, CSM.zvec[cntr], CSM.n_redshift[cntr]);
 		//printf("NLC computed successfully.\n");
 		/* Write result to file. Format: k [h/Mpc] B(k,z0) B(k,z1) ... B(k,zn) */
-		string filename = "my_nlc"+to_string(cntr)+".dat";
+		string filename = CSM.outdir+CSM.outfilename+to_string(cntr)+".dat";
+		std::cout << "Filename: "<< filename << std::endl;
 		ee2.write_nlc2file(filename, CSM.zvec[cntr], CSM.n_redshift[cntr]);
 	}
 

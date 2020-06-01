@@ -17,6 +17,7 @@ struct csmpars {
     std::vector<int> n_redshift;
     std::vector< std::vector<double> > zvec;
 	std::string outfilename;
+	std::string outdir;
 };
 
 csmpars ee2_parser(int n_args, char * vec_args[]);

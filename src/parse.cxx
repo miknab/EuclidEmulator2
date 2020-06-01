@@ -1,6 +1,6 @@
 #include <parse.h>
 #include <assert.h>
-
+#include <regex>
 
 csmpars ee2_parser(int n_args, char * vec_args[]){
 	size_t n_cosmo_pars;
@@ -43,6 +43,13 @@ predictor of the non-linear correction of the matter power spectrum.");
 
     if (result.count("outfile")){
         CSM.outfilename = result["outfile"].as<std::string>();
+    }
+
+	if (result.count("outdir")){
+        CSM.outdir = result["outdir"].as<std::string>();
+		if (strcmp(&CSM.outdir.back(), "/")){
+			CSM.outdir += "/";
+		}
     }
 
 	// n_cosmo_pars counts the number of flags defining cosmological parameters
@@ -141,6 +148,21 @@ double extract_value(std::string line){
 	return value;	
 }
 
+std::string ltrim(const std::string& s) {
+/* Removes leading whitespaces from string */
+	return std::regex_replace(s, std::regex("^\\s+"), std::string(""));
+}
+
+std::string rtrim(const std::string& s) {
+/* Removes trailing whitespaces from string */
+	return std::regex_replace(s, std::regex("\\s+$"), std::string(""));
+}
+
+std::string trim(const std::string& s) {
+/* Removes leading and trailing whitespaces from string */
+	return ltrim(rtrim(s));
+}
+
 void read_classfile(std::string class_file_name, csmpars &CSM){
     printf("Reading cosmology from CLASS file...\n");
 	FILE * classfile;
@@ -159,54 +181,56 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 	double Omega_cdm;
 	bool read_next_line = true;
 	bool hubble_defined = false;
-	bool little_omegab_defined = false;
-	bool little_omegacdm_defined = false;
 	bool mnu_defined = false;
 	bool Omega_ncdm_defined = false;
 	bool As_defined = false;
+	// first: find the Hubble parameter:
+	while(read_next_line){
+        if (fgets(instring, 256, classfile) != NULL){
+            current_line = instring;
+            // Hubble parameter:
+            if (starts_with(current_line, "H0 =") || starts_with(current_line, "H0=")){
+                CSM.h.push_back(0.01*extract_value(current_line));
+                hubble_defined = true;
+            }
+            if (starts_with(current_line, "h =") || starts_with(current_line, "h=")){
+                CSM.h.push_back(extract_value(current_line));
+                hubble_defined = true;
+            }
+		}
+		else{
+            read_next_line = false;
+        }
+	}
+	// Check if all necessary parameters are defined:
+    if (!hubble_defined){
+        std::cout << "\n==> ERROR <==: You have not explicitely defined the Hubble parameter. Please do so! \n" \
+                  << "               EuclidEmulator2 does not accept the peak scale parameter theta_s as an alternative\n" \
+                  << "               to specifying H0 or h, respectively." << std::endl;
+        exit(1);
+    }
+	// Go back to beginning of file.
+	rewind(classfile);
+
+	// Now that we know the Hubble parameter, we can read the remaining parameters:
+    read_next_line = true;
     while(read_next_line){
         if (fgets(instring, 256, classfile) != NULL){
 			current_line = instring;
-			// Hubble parameter:
-			if (starts_with(current_line, "H0 =") || starts_with(current_line, "H0=")){
-				CSM.h.push_back(0.01*extract_value(current_line));
-				hubble_defined = true;
-			}
-			if (starts_with(current_line, "h =") || starts_with(current_line, "h=")){
-				CSM.h.push_back(extract_value(current_line));
-				hubble_defined = true;
-			}
 			// Baryon density parameter: 
 			if (starts_with(current_line, "Omega_b =") || starts_with(current_line, "Omega_b=")){
-				if(little_omegacdm_defined){
-					std::cout << "\n==> ERROR <==: Please don't mix definitions of capital and lower-case Omega's." << std::endl;
-					exit(1);
-				}
 				CSM.Omega_b.push_back(extract_value(current_line));
             }
 			if (starts_with(current_line, "omega_b =") || starts_with(current_line, "omega_b=")){
-				//if(!little_omegacdm_defined){
-                //    std::cout << "\n==> ERROR <==: Please don't mix definitions of capital and lower-case Omega's." << std::endl;
-                //    exit(1);
-                //}
-				CSM.Omega_b.push_back(extract_value(current_line));
-				little_omegab_defined=true;
+				CSM.Omega_b.push_back(extract_value(current_line)/pow(CSM.h.at(0),2));	
 			}
 			// Cold dark matter (CDM) density parameter:
 			if (starts_with(current_line, "Omega_cdm =") || starts_with(current_line, "Omega_cdm=")){
-				if(little_omegab_defined){
-                    std::cout << "\n==> ERROR <==: Please don't mix definitions of capital and lower-case Omega's." << std::endl;
-                    exit(1);
-                }
                 Omega_cdm = extract_value(current_line);
             }
 			if (starts_with(current_line, "omega_cdm =") || starts_with(current_line, "omega_cdm=")){
-				//if(!little_omegab_defined){
-                //    std::cout << "\n==> ERROR <==: Please don't mix definitions of capital and lower-case Omega's." << std::endl;
-                //    exit(1);
-                //}
-                Omega_cdm = extract_value(current_line);
-                little_omegacdm_defined=true;
+                Omega_cdm = extract_value(current_line)/pow(CSM.h.at(0),2);
+                
 			}
 			// Massive neutrinos:
 			if (starts_with(current_line, "m_ncdm =") || starts_with(current_line, "m_ncdm=")){
@@ -272,6 +296,23 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 				z_tmp.push_back(atof(value_str.c_str()));
 				CSM.zvec.push_back(z_tmp);
             }
+			if (starts_with(current_line, "root =") || starts_with(current_line, "root=")){
+                std::string delimiter = "/", fileroot = current_line.substr(current_line.find("=")+1);
+				size_t pos = 0;
+				CSM.outdir = "";
+				while ((pos = fileroot.find(delimiter)) != std::string::npos) {
+					CSM.outdir += trim(fileroot.substr(0,pos)) + "/";
+					fileroot.erase(0, pos + delimiter.length());
+				}
+				CSM.outfilename = trim(fileroot);
+				std::string newline="\n";
+				int newlinelength = newline.length();
+				int startpos = CSM.outfilename.length()-newlinelength;
+				if (CSM.outfilename.compare(startpos - newlinelength, newlinelength, newline)){
+					CSM.outfilename.replace(startpos,newlinelength,"");
+					CSM.outfilename = trim(CSM.outfilename);
+				}
+            }
 			// Check parameters implicitly defined in EE2:
 			if (starts_with(current_line, "Omega_k =") || starts_with(current_line, "Omega_k=")){
                 if(extract_value(current_line) != 0.0 ){
@@ -296,16 +337,8 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 	} 
 	// Compute matter density parameter;
 	CSM.Omega_m.push_back(Omega_cdm + CSM.Omega_b.at(0)); // Notice that here boh Omega and omega can be stored.
-	// Convert from omega to Omega (if necessary):
-	if (hubble_defined && little_omegab_defined) CSM.Omega_b.at(0) /= pow(CSM.h.at(0),2);
-	if (hubble_defined && little_omegab_defined && little_omegacdm_defined) CSM.Omega_m.at(0) /= pow(CSM.h.at(0),2);
+
 	// Check if all necessary parameters are defined:
-	if (!hubble_defined){
-        std::cout << "\n==> ERROR <==: You have not explicitely defined the Hubble parameter. Please do so! \n" \
-                  << "               EuclidEmulator2 does not accept the peak scale parameter theta_s as an alternative\n" \
-                  << "               to specifying H0 or h, respectively." << std::endl;
-        exit(1);
-    }
 	if (!mnu_defined){
 		if (Omega_ncdm_defined){
         	std::cout << "\n==> ERROR <==: You have not explicitely defined the neutrino mass eigenstates. Please do so! \n" \
