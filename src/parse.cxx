@@ -41,17 +41,11 @@ predictor of the non-linear correction of the matter power spectrum.");
     }
 	CSM.verbosity_level = result["verbosity"].as<int>();
 
-    if (result.count("outfile")){
-        CSM.outfilename = result["outfile"].as<std::string>();
-    }
-
-	if (result.count("outdir")){
-        CSM.outdir = result["outdir"].as<std::string>();
-		if (strcmp(&CSM.outdir.back(), "/")){
-			CSM.outdir += "/";
-		}
-    }
-
+    CSM.outfilename = result["outfile"].as<std::string>();
+    CSM.outdir = result["outdir"].as<std::string>();
+	if (strcmp(&CSM.outdir.back(), "/")){
+		CSM.outdir += "/";
+	}
 	// n_cosmo_pars counts the number of flags defining cosmological parameters
 	// on the commmand line
 	n_cosmo_pars = result.count("Omega_b") + result.count("Omega_m") \
