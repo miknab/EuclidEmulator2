@@ -113,10 +113,17 @@ void EuclidEmulator::compute_nlc(Cosmology csm, vector<double> redshift, int n_r
 	double basisfunc;
 	double stp_no[n_redshift];
 
+	//printf("There are %d redshifts to compute.\n", n_redshift);
+
 	// Convert all redshifts into step numbers
 	// As we are looping through all redshifts anyway, we can just 
 	// as well use the same loop to declare Bvec[iz]
 	for(int iz=0; iz<n_redshift; iz++) {
+		if(redshift.at(iz) > 10.0 || redshift.at(iz) < 0.0){
+			std::cout << "ERROR: EuclidEmulator2 accepts only redshifts in the interval [0.0, 10.0]\n" \
+					  << "The current redshift z = " << redshift.at(iz) << " is therefore ignored." << std::endl;
+			continue;
+		}
 		stp_no[iz] = csm.compute_step_number(redshift.at(iz));
         //printf("nStep(%.2f) = %.4f\n", redshift.at(iz), stp_no[iz]);
 	}
