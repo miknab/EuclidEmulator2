@@ -172,7 +172,7 @@ void read_inifile(std::string class_file_name, csmpars &CSM){
 	}
 
 	// Read file line by line
-	double Omega_cdm;
+	double Omega_cdm, omega_nu;
 	bool read_next_line = true;
 	bool hubble_defined = false;
 	bool mnu_defined = false;
@@ -187,8 +187,12 @@ void read_inifile(std::string class_file_name, csmpars &CSM){
                 CSM.h.push_back(0.01*extract_value(current_line));
                 hubble_defined = true;
             }
-            if (starts_with(removeblanks(current_line), "h=") || starts_with(removeblanks(current_line), "hubble=")){
+            if (starts_with(removeblanks(current_line), "h=")){
                 CSM.h.push_back(extract_value(current_line));
+                hubble_defined = true;
+            }
+			if (starts_with(removeblanks(current_line), "hubble=")){
+                CSM.h.push_back(0.01*extract_value(current_line));
                 hubble_defined = true;
             }
 		}
@@ -223,10 +227,29 @@ void read_inifile(std::string class_file_name, csmpars &CSM){
                 Omega_cdm = extract_value(current_line);
             }
 			if (starts_with(removeblanks(current_line), "omega_cdm=") || starts_with(removeblanks(current_line), "omch2=")){
-                Omega_cdm = extract_value(current_line)/pow(CSM.h.at(0),2);
-                
+                Omega_cdm = extract_value(current_line)/pow(CSM.h.at(0),2);                
 			}
 			// Massive neutrinos:
+			if (starts_with(removeblanks(current_line), "Omega_ncdm=")){
+				std::cout << "--> WARNING <--: You have specified Omega_ncdm instead of Sum m_nu. Notice that\n" \
+                          << "                 EuclidEmulator2 only recognizes Sum m_nu. For the conversion\n" \
+                          << "                 the approximate formula Sum m_nu = 93.14 eV * Omega_ncdm*h2 is used.\n" \
+                          << "                 For a more accurate value of Sum m_nu you should specify it\n" \
+                          << "                 directly." << std::endl;
+                omega_nu = extract_value(current_line)*pow(CSM.h.at(0),2);
+				CSM.Sum_m_nu.push_back(93.14 * omega_nu);
+				mnu_defined = true;
+            }
+			if (starts_with(removeblanks(current_line), "omnuh2=")){
+				std::cout << "--> WARNING <--: You have specified omnuh2 instead of Sum m_nu. Notice that\n" \
+						  << "                 EuclidEmulator2 only recognizes Sum m_nu. For the conversion\n" \
+						  << "                 the approximate formula Sum m_nu = 93.14 eV * omnuh2 is used.\n" \
+						  << "                 For a more accurate value of Sum m_nu you should specify it\n" \
+						  << "                 directly." << std::endl; 
+				omega_nu = extract_value(current_line);
+                CSM.Sum_m_nu.push_back(93.14 * omega_nu);
+				mnu_defined = true;
+            }
 			if (starts_with(removeblanks(current_line), "m_ncdm=")){
 				std::string token, value_str = current_line.substr(current_line.find("=")+1), delimiter = ",";
 				size_t pos = 0;
@@ -290,14 +313,18 @@ void read_inifile(std::string class_file_name, csmpars &CSM){
 				z_tmp.push_back(atof(value_str.c_str()));
 				CSM.zvec.push_back(z_tmp);
             }
-			if (starts_with(removeblanks(current_line), "root=") || starts_with(removeblanks(current_line), "output_root=")){
-                std::string delimiter = "/", fileroot = current_line.substr(current_line.find("=")+1);
+			if (starts_with(removeblanks(current_line), "root=")){
+                std::string newoutdir, delimiter = "/", fileroot = current_line.substr(current_line.find("=")+1);
 				size_t pos = 0;
-				CSM.outdir = "";
+				newoutdir = "";
 				while ((pos = fileroot.find(delimiter)) != std::string::npos) {
-					CSM.outdir += trim(fileroot.substr(0,pos)) + "/";
+					newoutdir += trim(fileroot.substr(0,pos)) + "/";
 					fileroot.erase(0, pos + delimiter.length());
 				}
+				if(!newoutdir.empty()){
+					CSM.outdir = newoutdir;
+				}				
+
 				CSM.outfilename = trim(fileroot);
 				std::string newline="\n";
 				int newlinelength = newline.length();
@@ -306,6 +333,19 @@ void read_inifile(std::string class_file_name, csmpars &CSM){
 					CSM.outfilename.replace(startpos,newlinelength,"");
 					CSM.outfilename = trim(CSM.outfilename);
 				}
+            }
+			if (starts_with(removeblanks(current_line), "output_root=")){
+                std::string newoutdir, delimiter = "/", fileroot = current_line.substr(current_line.find("=")+1);
+                size_t pos = 0;
+                newoutdir = "";
+                while ((pos = fileroot.find(delimiter)) != std::string::npos) {
+                    newoutdir += trim(fileroot.substr(0,pos)) + "/";
+                    fileroot.erase(0, pos + delimiter.length());
+                }
+				if(!newoutdir.empty()){
+                    CSM.outdir = newoutdir;
+                }
+                CSM.outfilename = trim(fileroot);
             }
 			// Check parameters implicitly defined in EE2:
 			if (starts_with(removeblanks(current_line), "Omega_k=")){
