@@ -23,8 +23,7 @@ predictor of the non-linear correction of the matter power spectrum.");
         ("w,w_a", "time-dependent dark energy equation-of-state parameter", cxxopts::value<double>())
         ("A,A_s", "spectral amplitude", cxxopts::value<double>())
         ("z,redshift", "redshift at which the NLC shall be computed", cxxopts::value< std::vector< double > >())
-        ("l,classfile", "path to CLASS parameter file", cxxopts::value<std::string>())
-        ("a,cambfile", "path to CAMB parameter file", cxxopts::value<std::string>())
+        ("i,inifile", "path to CLASS or CAMB parameter file", cxxopts::value<std::string>())
         ("p,parfile", "path to EE2 parameter file", cxxopts::value<std::string>())
         ("o,outfile", "output file name", cxxopts::value<std::string>()->default_value("nlc"))
 		("d,outdir", "output directory", cxxopts::value<std::string>()->default_value("results"))
@@ -62,14 +61,10 @@ predictor of the non-linear correction of the matter power spectrum.");
 		}
 		read_cosmo_from_cmdline(result, CSM);
 	}
-	if (result.count("classfile")){
+	if (result.count("inifile")){
 		assert(n_cosmo_pars == 0);
-       	read_classfile(result["classfile"].as<std::string>(), CSM);
+       	read_inifile(result["inifile"].as<std::string>(), CSM);
 	   }
-    if (result.count("cambfile")){
-		assert(n_cosmo_pars == 0);
-       	read_cambfile(result["cambfile"].as<std::string>(), CSM);
-    }
     if (result.count("parfile")){
 		assert(n_cosmo_pars == 0);
        	read_parfile(result["parfile"].as<std::string>(), CSM);
@@ -157,16 +152,21 @@ std::string trim(const std::string& s) {
 	return ltrim(rtrim(s));
 }
 
-void read_classfile(std::string class_file_name, csmpars &CSM){
-    printf("Reading cosmology from CLASS file...\n");
-	FILE * classfile;
+std::string removeblanks(const std::string& s) {
+/* Removes all whitespaces from string */
+    return std::regex_replace(s, std::regex("\\s+"), std::string(""));
+}
+
+void read_inifile(std::string class_file_name, csmpars &CSM){
+    printf("Reading cosmology from .ini file...\n");
+	FILE * inifile;
     char instring[256];
 	std::string current_line;
     char * token;
 
     // Open parameter file (and check for success):
-    classfile = fopen(class_file_name.c_str(), "r");
-    if(classfile == NULL){
+    inifile = fopen(class_file_name.c_str(), "r");
+    if(inifile == NULL){
         std::cout << "Could not open CLASS file " <<  class_file_name << std::endl;
         exit(1);
 	}
@@ -180,14 +180,14 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 	bool As_defined = false;
 	// first: find the Hubble parameter:
 	while(read_next_line){
-        if (fgets(instring, 256, classfile) != NULL){
+        if (fgets(instring, 256, inifile) != NULL){
             current_line = instring;
             // Hubble parameter:
-            if (starts_with(current_line, "H0 =") || starts_with(current_line, "H0=")){
+            if (starts_with(removeblanks(current_line), "H0=")){
                 CSM.h.push_back(0.01*extract_value(current_line));
                 hubble_defined = true;
             }
-            if (starts_with(current_line, "h =") || starts_with(current_line, "h=")){
+            if (starts_with(removeblanks(current_line), "h=") || starts_with(removeblanks(current_line), "hubble=")){
                 CSM.h.push_back(extract_value(current_line));
                 hubble_defined = true;
             }
@@ -204,30 +204,30 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
         exit(1);
     }
 	// Go back to beginning of file.
-	rewind(classfile);
+	rewind(inifile);
 
 	// Now that we know the Hubble parameter, we can read the remaining parameters:
     read_next_line = true;
     while(read_next_line){
-        if (fgets(instring, 256, classfile) != NULL){
+        if (fgets(instring, 256, inifile) != NULL){
 			current_line = instring;
 			// Baryon density parameter: 
-			if (starts_with(current_line, "Omega_b =") || starts_with(current_line, "Omega_b=")){
+			if (starts_with(removeblanks(current_line), "Omega_b=")){ 
 				CSM.Omega_b.push_back(extract_value(current_line));
             }
-			if (starts_with(current_line, "omega_b =") || starts_with(current_line, "omega_b=")){
+			if (starts_with(removeblanks(current_line), "omega_b=") || starts_with(removeblanks(current_line), "ombh2=")){
 				CSM.Omega_b.push_back(extract_value(current_line)/pow(CSM.h.at(0),2));	
 			}
 			// Cold dark matter (CDM) density parameter:
-			if (starts_with(current_line, "Omega_cdm =") || starts_with(current_line, "Omega_cdm=")){
+			if (starts_with(removeblanks(current_line), "Omega_cdm=")){ 
                 Omega_cdm = extract_value(current_line);
             }
-			if (starts_with(current_line, "omega_cdm =") || starts_with(current_line, "omega_cdm=")){
+			if (starts_with(removeblanks(current_line), "omega_cdm=") || starts_with(removeblanks(current_line), "omch2=")){
                 Omega_cdm = extract_value(current_line)/pow(CSM.h.at(0),2);
                 
 			}
 			// Massive neutrinos:
-			if (starts_with(current_line, "m_ncdm =") || starts_with(current_line, "m_ncdm=")){
+			if (starts_with(removeblanks(current_line), "m_ncdm=")){
 				std::string token, value_str = current_line.substr(current_line.find("=")+1), delimiter = ",";
 				size_t pos = 0;
 				double tot_m_nu = 0.0;
@@ -251,28 +251,28 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
                 CSM.Sum_m_nu.push_back(tot_m_nu);
 				mnu_defined = true;
        		}
-			if (starts_with(current_line, "Omega_ncdm =") || starts_with(current_line, "Omega_ncdm=")){
+			if (starts_with(removeblanks(current_line), "Omega_ncdm=") || starts_with(removeblanks(current_line), "omnuh2=")){
                 Omega_ncdm_defined = true;
             }
 			// spectral index:
-			if (starts_with(current_line, "n_s =") || starts_with(current_line, "n_s=")){
+			if (starts_with(removeblanks(current_line), "n_s=") || starts_with(removeblanks(current_line), "scalar_spectral_index(1)=")){
                 CSM.n_s.push_back(extract_value(current_line));
             }
 			// DE EoS w_0:
-			if (starts_with(current_line, "w0_fld =") || starts_with(current_line, "w0_fld=")){
+			if (starts_with(removeblanks(current_line), "w0_fld=") || starts_with(removeblanks(current_line), "w=")){ 
                 CSM.w_0.push_back(extract_value(current_line));
             }
 			// DE EoS w_a:
-			if (starts_with(current_line, "wa_fld =") || starts_with(current_line, "wa_fld=")){
+			if (starts_with(removeblanks(current_line), "wa_fld=") || starts_with(removeblanks(current_line), "wa=")){ 
                 CSM.w_a.push_back(extract_value(current_line));
             }
 			// spectral amplitude:
-			if (starts_with(current_line, "A_s =") || starts_with(current_line, "A_s=")){
+			if (starts_with(removeblanks(current_line), "A_s=") || starts_with(removeblanks(current_line), "scalar_amp(1)=")){
                 CSM.A_s.push_back(extract_value(current_line));
 				As_defined = true;
             }
 			// redshifts:
-			if (starts_with(current_line, "z_pk =") || starts_with(current_line, "z_pk=")){
+			if (starts_with(removeblanks(current_line), "z_pk=") || starts_with(removeblanks(current_line), "transfer_redshift(1)=")){
 				std::string token, value_str = current_line.substr(current_line.find("=")+1), delimiter = ",";
                 size_t pos = 0;
 				std::vector<double> z_tmp; // auxiliary vector (zvec is a matrix, z_tmp a row of this matrix)
@@ -290,7 +290,7 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 				z_tmp.push_back(atof(value_str.c_str()));
 				CSM.zvec.push_back(z_tmp);
             }
-			if (starts_with(current_line, "root =") || starts_with(current_line, "root=")){
+			if (starts_with(removeblanks(current_line), "root=") || starts_with(removeblanks(current_line), "output_root=")){
                 std::string delimiter = "/", fileroot = current_line.substr(current_line.find("=")+1);
 				size_t pos = 0;
 				CSM.outdir = "";
@@ -308,18 +308,25 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 				}
             }
 			// Check parameters implicitly defined in EE2:
-			if (starts_with(current_line, "Omega_k =") || starts_with(current_line, "Omega_k=")){
+			if (starts_with(removeblanks(current_line), "Omega_k=")){
                 if(extract_value(current_line) != 0.0 ){
 					std::cout << "\n==> ERROR <==: The defined cosmology is non-flat. Please set Omega_k = 0.0." << std::endl;
 					exit(1);
 				}
+            }
+			if (starts_with(removeblanks(current_line), "T_cmb=") || starts_with(removeblanks(current_line), "temp_cmb=")){
+                if(extract_value(current_line) != 2.7255 ){
+                    std::cout << "\n--> WARNING <--: The CMB temperature T_cmb ≠ 2.7255 K is ignored.\n" \
+							  << "                 EuclidEmulator2 always assumes T_cmb = 2.7255 K." << std::endl;
+                    exit(1);
+                }
             }
 		}
 		else{
             read_next_line = false;
         }
 	}
-	fclose(classfile);
+	fclose(inifile);
 	// Fill unspecified DE parameters:
 	if (CSM.w_0.size() == 0){
 		std::cout << "\n--> WARNING <--: w_0 is not specified --> set to -1.0." << std::endl; 
@@ -350,10 +357,6 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 				  << "               Alternative normalizations (as e.g. sigma_8) are not accepted by EuclidEmulator2." << std::endl;
 		exit(1); 
 	}
-}
-
-void read_cambfile(std::string camb_file_name, csmpars &CSM){
-    printf("Reading cosmology from CAMB file...\n");
 }
 
 void read_parfile(std::string par_file_name, csmpars &CSM){
