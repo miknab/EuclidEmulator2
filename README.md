@@ -66,7 +66,7 @@ Usage:
 ### Usage
 There are several ways of calling EuclidEmulator2. The different options are briefly explained in the following:
 
-* specify a cosmology directly by passing a value for each cosmological parameter (flags '-b, -m, -s, -n, -H, -W, -w, -A' and '-z' as well as there corresponding long versions). Notice that an arbitrary number of redshifts ('-z' flags) can be passed:
+* specify a cosmology directly by passing a value for each cosmological parameter (flags `-b, -m, -s, -n, -H, -W, -w, -A` and `-z` as well as there corresponding long versions). Notice that an arbitrary number of redshifts (`-z flags) can be passed:
 
 Example:
 ```
@@ -95,5 +95,5 @@ or
 
 
 ## License
-EuclidEmulator is free software, distributed under the GNU General Public License. This implies that you may freely distribute and copy the software. You may also modify it as you wish, and distribute these modified versions. You must always indicate prominently any changes you made in the original code and leave the copyright notices, and the no-warranty notice intact. Please read the General Public License for more details. 
+EuclidEmulator2 is free software, distributed under the GNU General Public License. This implies that you may freely distribute and copy the software. You may also modify it as you wish, and distribute these modified versions. You must always indicate prominently any changes you made in the original code and leave the copyright notices, and the no-warranty notice intact. Please read the General Public License for more details. 
 
