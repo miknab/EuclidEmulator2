@@ -69,10 +69,10 @@ predictor of the non-linear correction of the matter power spectrum.");
 		if (!result.count("type")){
 			printf("When passing an inifile, you must specify whether it is a CLASS or a CAMB file through the -t/--type flag\n");
 		}
-		if (result["type"].as<std::string>().compare("CLASS")){
+		if (!strcmp(result["type"].as<std::string>().c_str(),"CLASS")){
        		read_classfile(result["inifile"].as<std::string>(), CSM);
 	   	}
-		else if(result["type"].as<std::string>().compare("CAMB")){
+		else if(!strcmp(result["type"].as<std::string>().c_str(),"CAMB")){
 			read_cambfile(result["inifile"].as<std::string>(), CSM);
 		}
 		else{
