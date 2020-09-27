@@ -22,5 +22,6 @@ struct csmpars {
 
 csmpars ee2_parser(int n_args, char * vec_args[]);
 void read_cosmo_from_cmdline(cxxopts::ParseResult result, csmpars &CSM);
-void read_inifile(std::string class_file_name, csmpars &CSM);
+void read_classfile(std::string class_file_name, csmpars &CSM);
+void read_cambfile(std::string class_file_name, csmpars &CSM);
 void read_parfile(std::string par_file_name, csmpars &CSM);

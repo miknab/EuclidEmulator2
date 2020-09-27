@@ -1,6 +1,8 @@
 #include <parse.h>
 #include <assert.h>
+#include <string.h>
 #include <regex>
+
 
 csmpars ee2_parser(int n_args, char * vec_args[]){
 	size_t n_cosmo_pars;
@@ -24,6 +26,7 @@ predictor of the non-linear correction of the matter power spectrum.");
         ("A,A_s", "spectral amplitude", cxxopts::value<double>())
         ("z,redshift", "redshift at which the NLC shall be computed", cxxopts::value< std::vector< double > >())
         ("i,inifile", "path to CLASS or CAMB parameter file", cxxopts::value<std::string>())
+		("t,type", "'CLASS' or 'CAMB' depending on the file pointed to by -i/--inifile", cxxopts::value<std::string>())
         ("p,parfile", "path to EE2 parameter file", cxxopts::value<std::string>())
         ("o,outfile", "output file name", cxxopts::value<std::string>()->default_value("nlc"))
 		("d,outdir", "output directory", cxxopts::value<std::string>()->default_value("results"))
@@ -63,8 +66,19 @@ predictor of the non-linear correction of the matter power spectrum.");
 	}
 	if (result.count("inifile")){
 		assert(n_cosmo_pars == 0);
-       	read_inifile(result["inifile"].as<std::string>(), CSM);
-	   }
+		if (!result.count("type")){
+			printf("When passing an inifile, you must specify whether it is a CLASS or a CAMB file through the -t/--type flag\n");
+		}
+		if (result["type"].as<std::string>().compare("CLASS")){
+       		read_classfile(result["inifile"].as<std::string>(), CSM);
+	   	}
+		else if(result["type"].as<std::string>().compare("CAMB")){
+			read_cambfile(result["inifile"].as<std::string>(), CSM);
+		}
+		else{
+			printf("No valid type for ini file. Please set -t/--type to either 'CLASS' or 'CAMB'.\n");
+		}
+	}
     if (result.count("parfile")){
 		assert(n_cosmo_pars == 0);
        	read_parfile(result["parfile"].as<std::string>(), CSM);
