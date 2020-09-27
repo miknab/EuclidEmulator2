@@ -157,7 +157,7 @@ std::string removeblanks(const std::string& s) {
     return std::regex_replace(s, std::regex("\\s+"), std::string(""));
 }
 
-void check_implicit_classparameters(std::string class_file_name){
+void check_implicit_classparameters(std::string current_line){
 	// Check parameters implicitly defined in EE2:
 	if (starts_with(removeblanks(current_line), "Omega_k=")){
 		if(extract_value(current_line) != 0.0 ){
@@ -384,7 +384,7 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 	}
 }
 
-void check_implicit_cambparameters(std::string camb_file_name){
+void check_implicit_cambparameters(std::string current_line){
     // Check parameters implicitly defined in EE2:
     if (starts_with(removeblanks(current_line), "omk=")){
         if(extract_value(current_line) != 0.0 ){
