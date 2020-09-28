@@ -1,3 +1,4 @@
+ee2_data
 misc/*
 **/*.exe
 my_nlc*.dat
@@ -5,3 +6,8 @@ my_nlc*.dat
 validation/*
 *.swp
 *.ini
+*/CAMBpath
+*/CLASSpath
+results/*
+*.pxd
+*.bu
