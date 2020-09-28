@@ -13,10 +13,10 @@
 ./ee2.exe -p tests/test_csm.dat -o from_ee2_parfile
 
 mkdir CAMBpath
-./ee2.exe -i tests/test_params_nopath.ini -d CAMBpath
+./ee2.exe -i tests/test_params_nopath.ini -d CAMBpath -t CAMB
 
 mkdir CLASSpath
-./ee2.exe -i tests/EucRef_old_nopath.ini -d CLASSpath
+./ee2.exe -i tests/EucRef_old_nopath.ini -d CLASSpath -t CLASS
 
-./ee2.exe -i tests/test_params.ini -d CAMBpath
-./ee2.exe -i tests/EucRef_old.ini -d CLASSpath
+./ee2.exe -i tests/test_params.ini -d CAMBpath -t CAMB
+./ee2.exe -i tests/EucRef_old.ini -d CLASSpath -t CLASS
