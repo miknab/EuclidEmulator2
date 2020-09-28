@@ -176,6 +176,7 @@ void check_implicit_classparameters(std::string current_line){
 	if (starts_with(removeblanks(current_line), "Omega_k=")){
 		if(extract_value(current_line) != 0.0 ){
 			std::cerr << "\n==> ERROR <==: The defined cosmology is non-flat. Please set Omega_k = 0.0." << std::endl;
+			std::cerr << "\nABORT!" << std::endl;
 			exit(1);
 		}
 	}
@@ -183,6 +184,7 @@ void check_implicit_classparameters(std::string current_line){
 		if(extract_value(current_line) != 0.05 ){
 			std::cerr << "\n==> ERROR <==: The defined pivot scale is not specified to be 0.05 Mpc^{-1}.\n"\
 					  << "               This contradicts the hardcoded settings of EuclidEmulator2." << std::endl;
+            std::cerr << "\nABORT!" << std::endl;
 			exit(1);
 		}
 	}
@@ -190,6 +192,7 @@ void check_implicit_classparameters(std::string current_line){
 		if(extract_value(current_line) != 2.7255 ){
 			std::cerr << "\n--> WARNING <--: The CMB temperature T_cmb ≠ 2.7255 K is ignored.\n" \
 					  << "                 EuclidEmulator2 always assumes T_cmb = 2.7255 K." << std::endl;
+            std::cerr << "\nABORT!" << std::endl;
 			exit(1);
 		}
 	}
@@ -205,7 +208,8 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
     // Open parameter file (and check for success):
     inifile = fopen(class_file_name.c_str(), "r");
     if(inifile == NULL){
-        std::cerr << "Could not open CLASS file " <<  class_file_name << std::endl;
+        std::cerr << "\n==> ERROR <==: Could not open CLASS file " <<  class_file_name << std::endl;
+        std::cerr << "\nABORT!" << std::endl;
         exit(1);
 	}
 
@@ -220,6 +224,10 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 	while(read_next_line){
         if (fgets(instring, 256, inifile) != NULL){
             current_line = instring;
+
+			// But at the VERY first: check if all inputs are valid
+			check_implicit_classparameters(current_line);
+
             // Hubble parameter:
             if (starts_with(removeblanks(current_line), "H0=")){
                 CSM.h.push_back(0.01*extract_value(current_line));
@@ -239,6 +247,7 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
         std::cerr << "\n==> ERROR <==: You have not explicitely defined the Hubble parameter. Please do so! \n" \
                   << "               EuclidEmulator2 does not accept the peak scale parameter theta_s as an alternative\n" \
                   << "               to specifying H0 or h, respectively." << std::endl;
+        std::cerr << "\nABORT!" << std::endl;
         exit(1);
     }
 	// Go back to beginning of file.
@@ -384,6 +393,7 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
         	std::cout << "\n==> ERROR <==: You have not explicitely defined the neutrino mass eigenstates. Please do so! \n" \
             	      << "               Alternative specifications of the neutrino content (e.g. through Omega_ncdm) are not \n" \
 					  << "               accepted by EuclidEmulator2." << std::endl;
+        	std::cerr << "\nABORT!" << std::endl;
         	exit(1);
 		}else{
 			std::cout << "\n--> WARNING <--: Neither neutrino mass eigenstates nor a neutrino density parameter have been\n" \
@@ -394,6 +404,7 @@ void read_classfile(std::string class_file_name, csmpars &CSM){
 	if (!As_defined){
 		std::cout << "\n==> ERROR <==: You have not explicitely defined the spectral amplitude A_s. Please do so! \n" \
 				  << "               Alternative normalizations (as e.g. sigma_8) are not accepted by EuclidEmulator2." << std::endl;
+		std::cerr << "\nABORT!" << std::endl;
 		exit(1); 
 	}
 }
@@ -403,6 +414,7 @@ void check_implicit_cambparameters(std::string current_line){
     if (starts_with(removeblanks(current_line), "omk=")){
         if(extract_value(current_line) != 0.0 ){
             std::cerr << "\n==> ERROR <==: The defined cosmology is non-flat. Please set omk = 0.0." << std::endl;
+        	std::cerr << "\nABORT!" << std::endl;
             exit(1);
         }
     }
@@ -410,13 +422,15 @@ void check_implicit_cambparameters(std::string current_line){
         if(extract_value(current_line) != 0.05 ){
             std::cerr << "\n==> ERROR <==: The defined pivot scale is not specified to be 0.05 Mpc^{-1}.\n"\
                       << "               This contradicts the hardcoded settings of EuclidEmulator2." << std::endl;
+	        std::cerr << "\nABORT!" << std::endl;
             exit(1);
         }
     }
     if (starts_with(removeblanks(current_line), "temp_cmb=")){
         if(extract_value(current_line) != 2.7255 ){
-            std::cerr << "\n--> WARNING <--: The CMB temperature T_cmb ≠ 2.7255 K is ignored.\n" \
+            std::cerr << "\n==> ERROR <==: The CMB temperature T_cmb ≠ 2.7255 K is ignored.\n" \
                       << "                 EuclidEmulator2 always assumes T_cmb = 2.7255 K." << std::endl;
+            std::cerr << "\nABORT!" << std::endl;
             exit(1);
         }
     }
@@ -440,6 +454,7 @@ void read_cambfile(std::string camb_file_name, csmpars &CSM){
     inifile = fopen(camb_file_name.c_str(), "r");
     if(inifile == NULL){
         std::cerr << "Could not open CAMB file " <<  camb_file_name << std::endl;
+	    std::cerr << "\nABORT!" << std::endl;
         exit(1);
 	}
 
@@ -454,6 +469,10 @@ void read_cambfile(std::string camb_file_name, csmpars &CSM){
 	while(read_next_line){
         if (fgets(instring, 256, inifile) != NULL){
             current_line = instring;
+
+			// Very first: Check validity of input parameters
+			check_implicit_cambparameters(current_line);
+
             // Hubble parameter:
 			if (starts_with(removeblanks(current_line), "hubble=")){
                 CSM.h.push_back(0.01*extract_value(current_line));
@@ -469,6 +488,7 @@ void read_cambfile(std::string camb_file_name, csmpars &CSM){
         std::cerr << "\n==> ERROR <==: You have not explicitely defined the Hubble parameter. Please do so! \n" \
                   << "               EuclidEmulator2 does not accept the peak scale parameter theta_s as an alternative\n" \
                   << "               to specifying H0 or h, respectively." << std::endl;
+        std::cerr << "\nABORT!" << std::endl;
         exit(1);
     }
 	// Go back to beginning of file.
