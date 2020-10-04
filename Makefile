@@ -1,2 +1,6 @@
+SRCS = src/main.cxx src/cosmo.cxx src/emulator.cxx src/parse.cxx
+INCLUDES = -Isrc -Icxxopts/include #-I/opt/gsl/2.5/include
+LIBS = -lgsl -lgslcblas -lm
+
 all:
-	g++ src/main.cxx src/cosmo.cxx src/emulator.cxx src/parse.cxx -o ee2.exe -Isrc -Icxxopts/include -lgsl --std=c++11 
+	g++ $(SRCS) -o ee2.exe $(INCLUDES) $(LIBS) --std=c++11
