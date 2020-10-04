@@ -9,15 +9,14 @@ Reference: Euclid Consortium: Knabenhans et al. (2020), (;submitted to MNRAS)<br
 If you use EuclidEmulator2 in any way (for a publication or otherwise), please cite this paper.
 
 ## Currently implemented features
-* C++ executable for emulation of the non-linear correction factor B(k,z)
+* emulation of the non-linear correction factor <i>B(k,z)</i>
+* large redshift interval: <i>z</i> in the interval [0.0,10.0] 
+* spatial scales spanning more than three orders of magnitude: 8.73 x 10<sup>-3</sup> <i>h</i> / Mpc ≤ <i>k</i> ≤ 9.41 <i>h</i> / Mpc.
+* C++ executable
 * many different was to define the cosmologies:
-
-<ul>
- <li> direct definition of a single cosmology using command line parameters </li>
- <li> definition of several cosmologies through a parameter file </li>
- <li> definition of a cosmology through a CLASS or CAMB parameter file </li>
-</ul>
-
+  - direct definition of a single cosmology using command line parameters </li>
+  - definition of several cosmologies through a parameter file </li>
+  - definition of a cosmology through a CLASS or CAMB parameter file </li>
 * results are written to output file
 
 For a more extensive list of functionalities please the list of possible command line parameters shown [below](#building-and-installation).
