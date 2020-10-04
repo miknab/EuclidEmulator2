@@ -13,12 +13,13 @@ CC        = g++ # requires at least g++ version 4.9.1
 # without it.
 
 I_CXXOPTS = -Icxxopts/include
-I_GSL    = -I/opt/gsl/2.5/include # requires at least GSL version 2.0 (tested only with 2.5 and 2.6)
+I_GSL     = -I/opt/gsl/2.5/include # GSL versions older than 2.5 have not been tested.
+								   # GSL versions < 2.0 will certainly not work.
 INCL      = -Isrc $(I_CXXOPTS) $(I_GSL)
 
 # Set libraries
 # --------------
-LIBPATH   = -L/opt/gsl/2.5/lib
+LIBPATH   = -L/opt/gsl/2.5/lib # path to GSL library
 LIBS      = -lgsl -lgslcblas -lm
 
 # Define all source files
