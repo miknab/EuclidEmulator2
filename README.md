@@ -27,6 +27,7 @@ For a more extensive list of functionalities please the list of possible command
 ## Features yet to be implemented
 * resolution correction emulator
 * pip-installable python3 wrapper
+* allow customization of output <i>k</i> modes
 
 ## Quick start
 ### Prerequisites
