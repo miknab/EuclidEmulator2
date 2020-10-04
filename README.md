@@ -88,7 +88,7 @@ Usage:
 ### Usage
 There are several ways of calling EuclidEmulator2. The different options are briefly explained in the following:
 
-* specify a cosmology directly by passing a value for each cosmological parameter (flags `-b, -m, -s, -n, -H, -W, -w, -A` and `-z` as well as there corresponding long versions). Notice that an arbitrary number of redshifts (`-z flags) can be passed:
+* specify a cosmology directly by passing a value for each cosmological parameter (flags `-b, -m, -s, -n, -H, -W, -w, -A` and `-z` as well as there corresponding long versions). Notice that an arbitrary number of redshifts (`-z` flags) can be passed:
 
 Example:
 ```
