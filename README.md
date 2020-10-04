@@ -50,7 +50,7 @@ If you have not done so already, either download this repository or clone it to 
 ```
 
 ### Building and installation
-The current version of EuclidEmulator2 comes as a command line interface (CLI). In order to compile it, cd into the EuclidEmulator2 directory, modify the `Makefile` if you want to and execute 
+The current version of EuclidEmulator2 comes as a command line interface (CLI). In order to build it, cd into the EuclidEmulator2 directory, check the `Makefile` and modify it as required (in particular the path of the `-I` and `-L` flag for GSL) and execute 
 
 ```
    make
