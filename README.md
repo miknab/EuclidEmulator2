@@ -10,8 +10,9 @@ If you use EuclidEmulator2 in any way (for a publication or otherwise), please c
 
 ## Currently implemented features
 * emulation of the non-linear correction factor <i>B(k,z)</i>
-* large redshift interval: <i>z</i> in the interval [0.0,10.0] 
+* large allowd redshift interval: <i>z</i> in the interval [0.0,10.0] 
 * spatial scales spanning more than three orders of magnitude: 8.73 x 10<sup>-3</sup> <i>h</i> / Mpc ≤ <i>k</i> ≤ 9.41 <i>h</i> / Mpc.
+
 * C++ executable
 * many different was to define the cosmologies:
   - direct definition of a single cosmology using command line parameters </li>
