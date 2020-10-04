@@ -24,7 +24,7 @@ For a more extensive list of functionalities please the list of possible command
 
 ## Features yet to be implemented
 * resolution correction emulator
-* pip-installable python wrapper
+* pip-installable python3 wrapper
 
 ## Contact information
 If you have any questions and/or remarks related to this work, please do not hesitate to send me an email (mischakATphysik.uzh.ch)
