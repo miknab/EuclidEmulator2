@@ -8,8 +8,23 @@ Reference: Euclid Consortium: Knabenhans et al. (2020), (;submitted to MNRAS)<br
 
 If you use EuclidEmulator2 in any way (for a publication or otherwise), please cite this paper.
 
-STAY TUNED:
-I am working on a python wrapper allowing for simple intergration in other python codes and interactive use.
+## Currently implemented features
+* C++ executable for emulation of the non-linear correction factor B(k,z)
+* many different was to define the cosmologies:
+
+<ul>
+ <li> direct definition of a single cosmology using command line parameters </li>
+ <li> definition of several cosmologies through a parameter file </li>
+ <li> definition of a cosmology through a CLASS or CAMB parameter file </li>
+</ul>
+
+* results are written to output file
+
+For a more extensive list of functionalities please the list of possible command line parameters shown [below](#building-and-installation).
+
+## Features yet to be implemented
+* resolution correction emulator
+* pip-installable python wrapper
 
 ## Contact information
 If you have any questions and/or remarks related to this work, please do not hesitate to send me an email (mischakATphysik.uzh.ch)
@@ -18,7 +33,15 @@ If you have any questions and/or remarks related to this work, please do not hes
 ### Prerequisites
 In any case you need:
  * C++11 or later
- * GNU Scientific Library (GSL; see https://www.gnu.org/software/gsl/)
+ * GNU Scientific Library version 2.5 or higher (GSL; see https://www.gnu.org/software/gsl/)
+ * g++ version 4.9.1 or higher
+ 
+### Test installations
+The code was successfully compiled on the following systems and environments:
+
+* Mac OS X Mojave (10.14.6), with g++ version 9.3.0 and GSL version 2.6 (both g++ and GSL were installed with Homebrew)
+* Linux (Red Hat 4.4.7-18), with g++ version 4.9.1 and GSL version 2.5
+
  
 ### Get the code
 If you have not done so already, either download this repository or clone it to your local host (under Linux you can get a gzipped tar-ball via
@@ -39,6 +62,7 @@ This will create an executable file called `ee2.exe`. In order to check if the b
 ```
 
 You should now see the following output:
+<a 
 
 ```
 Highly accurate and efficient AI-based predictor of the non-linear correction of the matter power spectrum.
