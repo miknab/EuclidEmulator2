@@ -61,7 +61,6 @@ This will create an executable file called `ee2.exe`. In order to check if the b
 ```
 
 You should now see the following output:
-<a 
 
 ```
 Highly accurate and efficient AI-based predictor of the non-linear correction of the matter power spectrum.
