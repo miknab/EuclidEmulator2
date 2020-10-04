@@ -8,6 +8,8 @@ Reference: Euclid Consortium: Knabenhans et al. (2020), (;submitted to MNRAS)<br
 
 If you use EuclidEmulator2 in any way (for a publication or otherwise), please cite this paper.
 
+<b>Contact information:</b> If you have any questions and/or remarks related to this work, please do not hesitate to send me an email (mischakATphysik.uzh.ch)
+
 ## Currently implemented features
 * emulation of the non-linear correction factor <i>B(k,z)</i>
 * large allowd redshift interval: <i>z</i> in the interval [0.0,10.0] 
@@ -25,9 +27,6 @@ For a more extensive list of functionalities please the list of possible command
 ## Features yet to be implemented
 * resolution correction emulator
 * pip-installable python3 wrapper
-
-## Contact information
-If you have any questions and/or remarks related to this work, please do not hesitate to send me an email (mischakATphysik.uzh.ch)
 
 ## Quick start
 ### Prerequisites
