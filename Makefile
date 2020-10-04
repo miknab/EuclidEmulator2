@@ -30,3 +30,6 @@ EXEC = -o ee2.exe
 
 all:
 	$(CC) $(SRCS) $(EXEC) $(INCL) $(LIBS) --std=c++11
+
+clean:
+	rm -f *.o *.exe
