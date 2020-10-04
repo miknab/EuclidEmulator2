@@ -13,11 +13,12 @@ CC        = g++ # requires at least g++ version 4.9.1
 # without it.
 
 I_CXXOPTS = -Icxxopts/include
-#I_GSL    = -I/opt/gsl/2.5/include # requires at least GSL version 2.0 (tested only with 2.5 and 2.6)
-INCL      = -Isrc $(I_CXXOPTS) #$(I_GSL)
+I_GSL    = -I/opt/gsl/2.5/include # requires at least GSL version 2.0 (tested only with 2.5 and 2.6)
+INCL      = -Isrc $(I_CXXOPTS) $(I_GSL)
 
 # Set libraries
 # --------------
+LIBPATH   = -L/opt/gsl/2.5/lib
 LIBS      = -lgsl -lgslcblas -lm
 
 # Define all source files
@@ -29,7 +30,7 @@ SRCS 	  = src/main.cxx src/cosmo.cxx src/emulator.cxx src/parse.cxx
 EXEC = -o ee2.exe
 
 all:
-	$(CC) $(SRCS) $(EXEC) $(INCL) $(LIBS) --std=c++11
+	$(CC) $(SRCS) $(EXEC) $(INCL) $(LIBPATH) $(LIBS) --std=c++11
 
 clean:
 	rm -f *.o *.exe
