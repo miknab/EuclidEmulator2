@@ -121,7 +121,7 @@ Example:
 
 Example:
 ```
-    ./ee2.exe -p tests/test_csm.dat
+    ./ee2.exe -p tests/ee2_parfile.par
 ```
 
 Checkout the file `tests/ee2_parfile.par` in order to learn more about how to structure such a parameter file.
