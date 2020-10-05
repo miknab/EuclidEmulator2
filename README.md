@@ -117,25 +117,27 @@ Example:
               -z 0.0 -z 0.1081179 -z 0.4880429
 ```
 
-* using the `-p` flagpass an input file that contains at least one cosmology.
+* using the `-p` flag to pass an EuclidEmulator2 parameter file that contains at least one cosmology.
 
 Example:
 ```
-    ./ee2.exe -p tests/test_csm.dat
+    ./ee2.exe -p tests/ee2_parfile.par
 ```
+
+Checkout the file `tests/ee2_parfile.par` in order to learn more about how to structure such a parameter file.
 
 * using the `-i` flag to pass a `CLASS` or `CAMB` parameter file.
 
 Examples:
 ```
-    ./ee2.exe -i tests/camb_parameter_file.ini
+    ./ee2.exe -i tests/camb_parameter_file.ini -t CAMB
 ```
 or
 ```
-    ./ee2.exe -i tests/class_parameter_file.ini
+    ./ee2.exe -i tests/class_parameter_file.ini -t CLASS
 ```
 
-
+Notice that the `-t` flag is mandatory in this case in order to tell the code whether it is reading a CLASS or a CAMB style \*.ini file.
 
 ## License
 EuclidEmulator2 is free software, distributed under the GNU General Public License. This implies that you may freely distribute and copy the software. You may also modify it as you wish, and distribute these modified versions. You must always indicate prominently any changes you made in the original code and leave the copyright notices, and the no-warranty notice intact. Please read the General Public License for more details. 
