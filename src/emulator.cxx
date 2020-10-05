@@ -8,6 +8,7 @@
 #include <gsl/gsl_spline2d.h>
 #include <gsl/gsl_sf_legendre.h>
 #include <math.h>
+#include <assert.h>
 #include "emulator.h"
 
 using namespace std; 
