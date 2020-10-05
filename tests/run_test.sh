@@ -10,13 +10,10 @@
 		  -z 0.0 -z 0.1081179 -z 0.4880429 -z 1.010451 -z 1.998261 -z 3.035232 -z 5.255458 -z 10.0\
 		  -o cmd_input_test.dat
 
-./ee2.exe -p tests/test_csm.dat -o from_ee2_parfile
+./ee2.exe -p tests/ee2_parfile.dat -o from_ee2_parfile
 
-mkdir CAMBpath
-./ee2.exe -i tests/test_params_nopath.ini -d CAMBpath -t CAMB
+mkdir results/CAMBpath
+./ee2.exe -i tests/CAMB_parfile.ini -d results/CAMBpath -t CAMB
 
-mkdir CLASSpath
-./ee2.exe -i tests/EucRef_old_nopath.ini -d CLASSpath -t CLASS
-
-./ee2.exe -i tests/test_params.ini -d CAMBpath -t CAMB
-./ee2.exe -i tests/EucRef_old.ini -d CLASSpath -t CLASS
+mkdir results/CLASSpath
+./ee2.exe -i tests/CLASS_parfile.ini -d results/CLASSpath -t CLASS
