@@ -117,12 +117,14 @@ Example:
               -z 0.0 -z 0.1081179 -z 0.4880429
 ```
 
-* using the `-p` flagpass an input file that contains at least one cosmology.
+* using the `-p` flag to pass an EuclidEmulator2 parameter file that contains at least one cosmology.
 
 Example:
 ```
     ./ee2.exe -p tests/test_csm.dat
 ```
+
+Checkout the file `tests/ee2_parfile.par` in order to learn more about how to structure such a parameter file.
 
 * using the `-i` flag to pass a `CLASS` or `CAMB` parameter file.
 
