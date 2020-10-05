@@ -89,8 +89,9 @@ Usage:
 ### Sanity check
 As a next step I recommend to go through the following:
 
-  1. enter the EuclidEmulator2 directory (root level). Here you should see, amongst others, a `tests` directory and a `results` directory. If you have just freshly built the code, the `results` directory should be empty.
-  2. execute the command `./tests/run_test.sh`
+  1. enter the EuclidEmulator2 directory (root level). Here you should see, amongst others, a `tests` directory.
+  2. execute the command `mkdir results`
+  3. execute the command `./tests/run_test.sh`
  
 You should now see some output printed to screen that provides information about the cosmologies that are being treated by EuclidEmulator2. As a result, the following files should now be in the `results` directory:
 
