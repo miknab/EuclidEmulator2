@@ -130,11 +130,11 @@ Checkout the file `tests/ee2_parfile.par` in order to learn more about how to st
 
 Examples:
 ```
-    ./ee2.exe -i tests/camb_parameter_file.ini
+    ./ee2.exe -i tests/camb_parameter_file.ini -t CAMB
 ```
 or
 ```
-    ./ee2.exe -i tests/class_parameter_file.ini
+    ./ee2.exe -i tests/class_parameter_file.ini -t CLASS
 ```
 
 
