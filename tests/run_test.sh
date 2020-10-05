@@ -10,7 +10,7 @@
 		  -z 0.0 -z 0.1081179 -z 0.4880429 -z 1.010451 -z 1.998261 -z 3.035232 -z 5.255458 -z 10.0\
 		  -o cmd_input_test.dat
 
-./ee2.exe -p tests/ee2_parfile.dat -o from_ee2_parfile
+./ee2.exe -p tests/ee2_parfile.par -o from_ee2_parfile
 
 mkdir results/CAMBpath
 ./ee2.exe -i tests/CAMB_parfile.ini -d results/CAMBpath -t CAMB
