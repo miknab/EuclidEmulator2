@@ -4,7 +4,7 @@ In contrast to its predecessor EuclidEmulator, EuclidEmulator2 allows for 8-para
 
 Author:   M. Knabenhans<br/>
 Date of last update:      September 2020<br/>
-Reference: Euclid Consortium: Knabenhans et al. (2020), (;submitted to MNRAS)<br/>
+Reference: Euclid Consortium: Knabenhans et al. (2020), (submitted to MNRAS)<br/>
 
 If you use EuclidEmulator2 in any way (for a publication or otherwise), please cite this paper.
 
@@ -12,7 +12,7 @@ If you use EuclidEmulator2 in any way (for a publication or otherwise), please c
 
 ## Currently implemented features
 * emulation of the non-linear correction factor <i>B(k,z)</i>
-* large allowd redshift interval: <i>z</i> in the interval [0.0,10.0] 
+* large allowed redshift interval: <i>z</i> in the interval [0.0,10.0] 
 * spatial scales spanning more than three orders of magnitude: 8.73 x 10<sup>-3</sup> <i>h</i> / Mpc ≤ <i>k</i> ≤ 9.41 <i>h</i> / Mpc.
 
 * C++ executable
@@ -36,17 +36,35 @@ In any case you need:
  * GNU Scientific Library version 2.5 or higher (GSL; see https://www.gnu.org/software/gsl/)
  * g++ version 4.9.1 or higher
  
+#### GSL install
+On most machines, building GSL is relatively simple. To install it locally, e.g. in `~/local/gsl`, use
+```
+mkdir -p $HOME/local/gsl && cd $HOME/local
+wget -c ftp://ftp.gnu.org/gnu/gsl/gsl-latest.tar.gz -O - | tar zxv
+```
+The install procedure follows standard steps, but each one might take several minutes. Execute each command separately and only continue if there are no errors.
+```
+./configure --prefix=$HOME/local/gsl
+make
+make check
+make install
+```
+ Once done, make sure to add the GSL library to your library path with
+ ```
+ export LD_LIBRARY_PATH=$HOME/local/gsl/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+ ```
+ 
 ### Test installations
 The code was successfully compiled on the following systems and environments:
 
 * Mac OS X Mojave (10.14.6), with g++ version 9.3.0 and GSL version 2.6 (both g++ and GSL were installed with Homebrew)
 * Linux (Red Hat 4.4.7-18), with g++ version 4.9.1 and GSL version 2.5
-
+* Linux (Pop!_OS 20.04), with g++ version 9.3.0 and GSL version 2.6 (local GSL install)
  
 ### Get the code
-If you have not done so already, either download this repository or clone it to your local host (under Linux you can get a gzipped tar-ball via
+If you have not done so already, either download this repository or clone it to your local host (under Linux you can get an unzipped tar-ball via
 ```
-   wget https://github.com/miknab/EuclidEmulator2/archive/master.tar.gz
+   wget -c https://github.com/miknab/EuclidEmulator2/archive/master.tar.gz -O - | tar zxv
 ```
 
 ### Building and installation
