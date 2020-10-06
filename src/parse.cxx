@@ -21,7 +21,7 @@
 #include <assert.h>
 #include <string.h>
 #include <regex>
-
+#include <math.h>
 
 csmpars ee2_parser(int n_args, char * vec_args[]){
 	size_t n_cosmo_pars;
