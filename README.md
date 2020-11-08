@@ -4,7 +4,7 @@ In contrast to its predecessor EuclidEmulator, EuclidEmulator2 allows for 8-para
 
 Author:   M. Knabenhans<br/>
 Date of last update:      September 2020<br/>
-Reference: Euclid Consortium: Knabenhans et al. (2020), (submitted to MNRAS)<br/>
+Reference: Euclid Consortium: Knabenhans et al. (submitted), <a>https://arxiv.org/abs/2010.11288</a><br/>
 
 If you use EuclidEmulator2 in any way (for a publication or otherwise), please cite this paper.
 
