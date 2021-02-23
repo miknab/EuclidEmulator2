@@ -26,7 +26,6 @@ For a more extensive list of functionalities please the list of possible command
 
 ## Features yet to be implemented
 * resolution correction emulator
-* pip-installable python3 wrapper
 * allow customization of output <i>k</i> modes
 
 ## Quick start
@@ -35,6 +34,7 @@ In any case you need:
  * C++11 or later
  * GNU Scientific Library version 2.5 or higher (GSL; see https://www.gnu.org/software/gsl/)
  * g++ version 4.9.1 or higher
+ * cython (for the python wrapper)
  
 #### GSL install
 On most machines, building GSL is relatively simple. To install it locally, e.g. in `~/local/gsl`, use
@@ -68,7 +68,11 @@ If you have not done so already, either download this repository or clone it to 
 ```
 
 ### Building and installation
-The current version of EuclidEmulator2 comes as a command line interface (CLI). In order to build it, cd into the EuclidEmulator2 directory, check the `Makefile` and modify it as required (in particular the path of the `-I` and `-L` flag for GSL) and execute 
+The current version of EuclidEmulator2 comes both as a command line interface (CLI) or a python wrapper.
+
+#### CLI installation
+
+In order to build the CLI, cd into the EuclidEmulator2 directory, check the `Makefile` and modify it as required (in particular the path of the `-I` and `-L` flag for GSL) and execute 
 
 ```
    make
@@ -103,6 +107,23 @@ Usage:
   -v, --verbosity arg  verbosity level (0, 1 or 2) (default: 0)
   -h, --help           Print usage
 ```
+
+#### python installation
+
+To build the python wrapper simply execute
+
+```
+pip install .
+```
+
+To check if the installation was successful, just open python and do
+
+```
+import euclidemu2
+```
+
+A python notebook (test_euclid_emu2.ipynb) is also included, which includes an example for running the code and retrieving the boost factor.
+
 
 ### Sanity check
 As a next step I recommend to go through the following:
