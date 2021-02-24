@@ -21,6 +21,7 @@ If you use EuclidEmulator2 in any way (for a publication or otherwise), please c
   - definition of several cosmologies through a parameter file </li>
   - definition of a cosmology through a CLASS or CAMB parameter file </li>
 * results are written to output file
+* Python wrapper
 
 For a more extensive list of functionalities please the list of possible command line parameters shown [below](#building-and-installation).
 
@@ -110,7 +111,7 @@ Usage:
 
 #### python installation
 
-To build the python wrapper simply execute
+To build the python wrapper, cd into the EuclidEmulator2 directory and simply execute
 
 ```
 pip install .
