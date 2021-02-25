@@ -41,6 +41,7 @@ In any case you need:
 For the python wrapper, you need python with the following packages:
  * cython, numpy, scipy 
  * jupyter, matplotlib (for plotting in the example notebook)
+ 
  Note that the 3 essential packages will be installed during the wrapper installation, if not present, but may not be recognised by anaconda later, which may lead to duplicate installations.
  
 #### GSL install
