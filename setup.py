@@ -7,6 +7,12 @@ from distutils.sysconfig import get_python_lib
 os.environ["CC"] = "g++"
 os.environ["CXX"] = "g++"
 
+if 'LDFLAGS' in os.environ.keys():
+    ldfl=os.environ['LDFLAGS']
+    new_ldfl=ldfl.replace('-Wl,-dead_strip_dylibs ','')
+    os.environ['LDFLAGS']=new_ldfl
+
+
 pathtopythonlib=get_python_lib()
 
 extensions=Extension(name="euclidemu2",
