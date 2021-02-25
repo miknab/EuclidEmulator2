@@ -21,13 +21,15 @@ If you use EuclidEmulator2 in any way (for a publication or otherwise), please c
   - definition of several cosmologies through a parameter file </li>
   - definition of a cosmology through a CLASS or CAMB parameter file </li>
 * results are written to output file
-* Python wrapper
 
-For a more extensive list of functionalities please the list of possible command line parameters shown [below](#building-and-installation).
+* Python wrapper
+* Cosmology defined via parameter dictionary
+* Can output in custom k-range with extrapolation outside default range
+
+For a more extensive list of functionalities please the list of possible command line parameters shown [below](#building-and-installation). See the example jupyter notebook for details on running the python wrapper.
 
 ## Features yet to be implemented
 * resolution correction emulator
-* allow customization of output <i>k</i> modes
 
 ## Quick start
 ### Prerequisites
@@ -35,7 +37,11 @@ In any case you need:
  * C++11 or later
  * GNU Scientific Library version 2.5 or higher (GSL; see https://www.gnu.org/software/gsl/)
  * g++ version 4.9.1 or higher
- * cython (for the python wrapper)
+
+For the python wrapper, you need python with the following packages:
+ * cython, numpy, scipy 
+ * jupyter, matplotlib (for plotting in the example notebook)
+ Note that the 3 essential packages will be installed during the wrapper installation, if not present, but may not be recognised by anaconda later, which may lead to duplicate installations.
  
 #### GSL install
 On most machines, building GSL is relatively simple. To install it locally, e.g. in `~/local/gsl`, use
@@ -56,7 +62,7 @@ make install
  ```
  
 ### Test installations
-The code was successfully compiled on the following systems and environments:
+The c++ code was successfully compiled on the following systems and environments:
 
 * Mac OS X Mojave (10.14.6), with g++ version 9.3.0 and GSL version 2.6 (both g++ and GSL were installed with Homebrew)
 * Linux (Red Hat 4.4.7-18), with g++ version 4.9.1 and GSL version 2.5
@@ -123,7 +129,7 @@ To check if the installation was successful, just open python and do
 import euclidemu2
 ```
 
-A python notebook (test_euclid_emu2.ipynb) is also included, which includes an example for running the code and retrieving the boost factor.
+A python notebook (test_euclid_emu2.ipynb) is also included, which includes an example for running the code and retrieving the boost factor. If it runs correctly, the installation was successful.
 
 
 ### Sanity check

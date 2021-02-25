@@ -5,6 +5,7 @@ import os
 from distutils.sysconfig import get_python_lib
 
 os.environ["CC"] = "g++"
+os.environ["CXX"] = "g++"
 
 pathtopythonlib=get_python_lib()
 
@@ -26,4 +27,5 @@ setup(name='euclidemu2',
       package_dir={'euclidemu2': 'src'},
       package_data={'euclidemu2': ["ee2_bindata.dat","cosmo.h","emulator.h","units_and_constants.h"]},
       include_package_data=True,
+      install_requires=['cython','numpy','scipy']
       )
