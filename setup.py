@@ -22,6 +22,7 @@ extensions=Extension(name="euclidemu2",
                            extra_link_args=['-L/usr/local/lib'],
                            language="c++",
                            extra_compile_args=['-std=c++11',
+                                               '-D PRINT_FLAG=0',
                                                '-D PATH_TO_EE2_DATA_FILE="'+pathtopythonlib+'/euclidemu2/ee2_bindata.dat"']
                            )
 

@@ -14,6 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+try:
+    from classy import Class as _Class
+except ImportError:
+    print("\nClassy could not be found in your system.")
+    print("Here are some suggestions:\n")
+    print("\t -Download the Class from class-code.net and install it")
+    print("\t  together with its wrapper classy (type 'make' instead of")
+    print("\t  'make class'")
+    print("\t -If you know that Class is installed on your system")
+    print("\t  and yet classy could not be installed, try re-compiling")
+    print("\t  Class with just ''make'' instead of ''make class''")
+    print("NOTICE: Even without classy you can still use EuclidEmulator2")
+    print("        to emulate boost factors. You won't be able to compute")
+    print("        full power spectra, though.")
+
+
 import cython
 cimport cython
 from libc.stdlib cimport free
@@ -21,6 +37,7 @@ from libcpp.vector cimport vector
 from libcpp.string cimport string
 from cython.operator cimport dereference as deref
 
+import sys as _sys
 import numpy as np
 from scipy.interpolate import CubicSpline as _CubicSpline
 import warnings as _warnings
@@ -327,9 +344,11 @@ def convert_to_emu(class_pars_dict):
                      'h': h,
                      'w0_fld': w0_fld,
                      'wa_fld': wa_fld,
-                     'A_s': A_s}
+                     'A_s': A_s,
+                     'Omega_cdm': Om_cdm}
 
     return emu_pars_dict
+
 
 
 def get_boost(cosmo_par_in,redshifts,custom_kvec=None):
@@ -377,21 +396,21 @@ def get_boost(cosmo_par_in,redshifts,custom_kvec=None):
         custom_k_above = custom_kvec[[not(u) for u in upper_mask]]
 
         if any(custom_kvec > max(kvals)):
-            wrn_message = ("EuclidEmulator2 emulates the non-linear correction in \n"
+            wrn_message = ("Warning:\nEuclidEmulator2 emulates the non-linear correction in \n"
                            "the interval [8.73e-3 h/Mpc, 9.41h/Mpc]. You are \n"
                            "requesting k modes beyond k_max = 9.41h/Mpc. \n"
                            "Higher k modes constantly extrapolated.")
-            #if verbose:
-            _warnings.warn(wrn_message)
+
+            print(wrn_message)
             do_extrapolate_above = True
 
         if any(custom_kvec < min(kvals)):
-            wrn_message = ("EuclidEmulator2 emulates the non-linear correction in \n"
+            wrn_message = ("Warning:\nEuclidEmulator2 emulates the non-linear correction in \n"
                            "the interval [8.73e-3 h/Mpc, 9.41h/Mpc]. You are \n"
                            "requesting k modes below k_min = 8.73e-3 h/Mpc. \n"
                            "Lower k modes constantly extrapolated.")
-            #if verbose:
-            _warnings.warn(wrn_message)
+
+            print(wrn_message)
             do_extrapolate_below = True
 
 
@@ -426,3 +445,112 @@ def get_boost(cosmo_par_in,redshifts,custom_kvec=None):
         kvals = custom_kvec
 
     return kvals,bvals
+
+
+
+
+def get_plin(emu_pars_dict, custom_kvec, redshifts):
+
+    if _Class.__module__ not in _sys.modules:
+        print("You have not imported neither classee nor classy.\n \
+               Computing linear power spectrum is hence not possible.")
+        return None
+
+    # Convert single redshift input argument to array
+    if isinstance(redshifts, (int, float)):
+        redshifts = np.asarray([redshifts])
+    else:
+        redshifts = np.asarray(redshifts)
+
+    for z in redshifts:
+        assert z <= 10.0 and z>=0.0, "EuclidEmulator2 allows only redshifts in the interval [0.0, 10.0]"
+
+    # Convert single kvec input argument to array
+    if isinstance(custom_kvec, (int, float)):
+        custom_kvec = np.asarray([custom_kvec])
+    else:
+        custom_kvec = np.asarray(custom_kvec)
+
+    # "Stringify" the input arrays to be understandable for classy.
+    z_str=str(redshifts[0])
+
+    if len(redshifts)>1:
+      for i in range(1,len(redshifts)):
+        z_str+=','+str(redshifts[i])
+
+    # Convert the input dictionary into a Class-compatible dictionary
+    cosmo_par = convert_to_emu(emu_pars_dict)
+
+    # When no value for Omega_cdm is given, this is computed
+    if cosmo_par['Omega_cdm']==0:
+        cosmotmp=PyCosmology(cosmo_par['Omega_b'],
+                             cosmo_par['Omega_m'],
+                             cosmo_par['m_ncdm'],
+                             cosmo_par['n_s'],
+                             cosmo_par['h'],
+                             cosmo_par['w0_fld'],
+                             cosmo_par['wa_fld'],
+                             cosmo_par['A_s'])
+        cosmo_par['Omega_cdm']=cosmo_par['Omega_m']-cosmo_par['Omega_b']-cosmotmp.Omega_nu_0
+
+    # This parameter is eliminated as classy does not accept it.
+    del cosmo_par['Omega_m']
+
+    # Extend the input Class-compatible dictionary by the additional
+    # information requested by classy.
+    classy_pars = cosmo_par
+    classy_pars['Omega_Lambda'] = 0.0
+    classy_pars['output'] = 'mPk'
+    classy_pars['P_k_max_1/Mpc'] = custom_kvec[-1]*cosmo_par['h']
+    classy_pars['z_pk'] = z_str
+    # Assuming a single massive neutrino with all the mass
+    classy_pars['N_ur']=2.0308
+    classy_pars['N_ncdm']=1
+
+
+    # Create a "Class" instance called "cosmo" and run classy to compute
+    # the cosmological quantities.
+    cosmo = _Class()
+    cosmo.set(classy_pars)
+    cosmo.compute()
+
+    # Convert k units: h/Mpc to 1/Mpc
+    h = classy_pars['h']
+    k_classy_arr = h*custom_kvec
+
+    # Get shape of k vector
+    k_shape = k_classy_arr.shape
+
+    # Get power spectrum at tabulated z and k in units of Mpc^3
+    linpower = {i:
+                    np.array([cosmo.pk(k, z)*h*h*h
+                               for k in k_classy_arr]).reshape(k_shape)
+                    for i, z in enumerate(redshifts)}
+
+    return custom_kvec, linpower
+
+def get_pnonlin(emu_pars_dict, redshifts, custom_kvec=None):
+
+    if _Class.__module__ not in _sys.modules:
+        print("You have not imported neither classee nor classy.\n \
+               Emulating full power spectrum is hence not possible.")
+        return None
+
+    # Convert single redshift input argument to array
+    if isinstance(redshifts, (int, float)):
+        redshifts = np.asarray([redshifts])
+    else:
+        redshifts = np.asarray(redshifts)
+
+    kvec, Bk = get_boost(emu_pars_dict, redshifts, custom_kvec)
+
+    plin = get_plin(emu_pars_dict, kvec, redshifts)
+    plin = plin[1]
+
+    pnonlin = {}
+    for i, z in enumerate(redshifts):
+            pnonlin[i] = plin[i]*Bk[i]
+
+    return kvec, pnonlin, plin, Bk
+
+    
