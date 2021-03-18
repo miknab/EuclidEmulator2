@@ -1,6 +1,6 @@
 /* emulator.h
 *  ==========
-*  This file is part of EuclidEmulator2 
+*  This file is part of EuclidEmulator2
 *  Copyright (c) 2020 Mischa Knabenhans
 *
 *  EuclidEmulator2 is free software: you can redistribute it and/or modify
@@ -19,6 +19,10 @@
 
 #ifndef EMULATOR_H
 #define EMULATOR_H
+
+#ifndef PATH_TO_EE2_DATA_FILE
+#define PATH_TO_EE2_DATA_FILE "./ee2_bindata.dat"
+#endif
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline2d.h>
@@ -51,7 +55,7 @@ class EuclidEmulator{
 		/* Private member functions */
 		void read_in_ee2_data_file();
 		void pc_2d_interp();
-		void print_info();		
+		void print_info();
 
 	public:
 		/* Public members */

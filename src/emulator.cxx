@@ -1,6 +1,6 @@
 /* emulator.cxx
 *  =========
-*  This file is part of EuclidEmulator2 
+*  This file is part of EuclidEmulator2
 *  Copyright (c) 2020 Mischa Knabenhans
 *
 *  EuclidEmulator2 is free software: you can redistribute it and/or modify
@@ -30,10 +30,14 @@
 #include <assert.h>
 #include "emulator.h"
 
-using namespace std; 
+#include <stdio.h>
+#include <limits.h>
+#include <unistd.h>
+
+using namespace std;
 
 /* CONSTRUCTOR */
-EuclidEmulator::EuclidEmulator(): 
+EuclidEmulator::EuclidEmulator():
 	lmax(16),
 	nz(101),
 	nk(613),
@@ -41,8 +45,11 @@ EuclidEmulator::EuclidEmulator():
 			117, 117, 117, 117, 521, \
 			117, 1539, 173, 457}
 	{
+
 	read_in_ee2_data_file();
+
 	pc_2d_interp();
+
 }
 
 /* DESTRUCTOR */
@@ -53,13 +60,14 @@ EuclidEmulator::~EuclidEmulator(){
 }
 
 /* FUNCTION TO READ IN THE DATA FILE */
-void EuclidEmulator::read_in_ee2_data_file(){	
+void EuclidEmulator::read_in_ee2_data_file(){
 	/// VARIABLE DECLARATIONS ///
 	off_t size;
     struct stat s;
 	double *data;
 	double *kptr;
 	int i, ik, iz, idx = 0;
+
 
 	for(iz = 0; iz < nz; iz++){
 		for(ik = 0; ik < nk; ik++){
@@ -68,7 +76,7 @@ void EuclidEmulator::read_in_ee2_data_file(){
 	}
 
 	// ==== LOAD EUCLIDEMULATOR2 DATA FILE ==== //
-	int fp = open("./ee2_bindata.dat", O_RDONLY);
+	int fp = open(PATH_TO_EE2_DATA_FILE, O_RDONLY);
 	if(!fp) {
 		cerr << "Unable to open ./ee2_bindata.dat\n";
         exit(1);
@@ -86,7 +94,6 @@ void EuclidEmulator::read_in_ee2_data_file(){
     	this->pc[i] = &data[idx];  // pc[0] = PCA mean
     	idx += nk*nz;
     }
-
 	// Reading in PCE coefficients //
 	for (i=0;i<14;i++) {
     	this->pce_coeffs[i] = &data[idx];
@@ -98,16 +105,16 @@ void EuclidEmulator::read_in_ee2_data_file(){
     	this->pce_multiindex[i] = &data[idx];
     	idx += 8*n_coeffs[i];
     }
-
 	// vector of k modes
     kptr = &data[idx];
+
     for (i=0;i<nk;i++) {
 		this->kvec[i] = kptr[i];
     }
     idx += nk;
-
 	// Check if all data has been read in properly
 	assert(idx == size/sizeof(double));
+
 }
 
 /* 2D INTERPOLATION OF PRINCIPAL COMPONENTS */
@@ -115,9 +122,9 @@ void EuclidEmulator::pc_2d_interp(){
 	double logk[nk];
 	double stp[nz];
 	int i;
-	
+
 	for (i=0; i<nk; i++) logk[i] = log(this->kvec[i]);
-	for (i=nz-1; i>=0; i--) stp[i] = i;	
+	for (i=nz-1; i>=0; i--) stp[i] = i;
 	for (int i=0; i<15; i++){
 		logk2pc_acc[i] = gsl_interp_accel_alloc();
         logz2pc_acc[i] = gsl_interp_accel_alloc();
@@ -127,7 +134,7 @@ void EuclidEmulator::pc_2d_interp(){
 }
 
 /* COMPUTE NLC */
-//void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift, double* kmodes, int n_kmodes){	
+//void EuclidEmulator::compute_nlc(Cosmology csm, double* redshift, int n_redshift, double* kmodes, int n_kmodes){
 void EuclidEmulator::compute_nlc(Cosmology csm, vector<double> redshift, int n_redshift){
 	double pc_weight;
 	double basisfunc;
@@ -136,7 +143,7 @@ void EuclidEmulator::compute_nlc(Cosmology csm, vector<double> redshift, int n_r
 	//printf("There are %d redshifts to compute.\n", n_redshift);
 
 	// Convert all redshifts into step numbers
-	// As we are looping through all redshifts anyway, we can just 
+	// As we are looping through all redshifts anyway, we can just
 	// as well use the same loop to declare Bvec[iz]
 	for(int iz=0; iz<n_redshift; iz++) {
 		if(redshift.at(iz) > 10.0 || redshift.at(iz) < 0.0){
@@ -183,7 +190,7 @@ void EuclidEmulator::compute_nlc(Cosmology csm, vector<double> redshift, int n_r
 		// assemble PCA to get the final NLC according
         // to outer sum of eq. 27 in EE2 paper
 		for(int iz=0; iz<n_redshift; iz++){
-			//printf("Treating z[%d] = %.3f ==> nStep = %.3f\n", iz, redshift.at(iz), stp_no[iz]); 
+			//printf("Treating z[%d] = %.3f ==> nStep = %.3f\n", iz, redshift.at(iz), stp_no[iz]);
 			for(int ik=0; ik<nk; ik++){
 				Bvec[iz][ik] += (pc_weight*gsl_spline2d_eval(logklogz2pc_spline[ipc], log(this->kvec[ik]), stp_no[iz], logk2pc_acc[ipc], logz2pc_acc[ipc]));
 			}
@@ -191,7 +198,7 @@ void EuclidEmulator::compute_nlc(Cosmology csm, vector<double> redshift, int n_r
 	}
 	//printf("PCA assembled\n");
 }
-	
+
 /* WRITE NLC TO FILE */
 void EuclidEmulator::write_nlc2file(const string& filename, vector<double> zvec, int n_redshift){
 	ofstream fp_out (filename);
@@ -203,7 +210,7 @@ void EuclidEmulator::write_nlc2file(const string& filename, vector<double> zvec,
 	fp_out << header << endl;
 
 	// Writing the data
-	if (fp_out.is_open()){	
+	if (fp_out.is_open()){
 		for(int ik=0; ik<nk; ik++){
 			string line = to_string(this->kvec[ik]);
 			for(int iz=0; iz<n_redshift; iz++){
