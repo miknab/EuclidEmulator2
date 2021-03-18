@@ -77,6 +77,10 @@ predictor of the non-linear correction of the matter power spectrum.");
 	// If the cosmology shall be read from a file, then no cosmological parameter
 	// may be defined on the command line
 	if (n_cosmo_pars > 0){
+		if (!result.count("redshift")){
+			printf("There must be at least one specified redshift value (-z/--redshift flags) when the cosmology is defined by command line flags.\n");
+			exit(1);
+			}
 		if (n_cosmo_pars < 8){
 			printf("Cosmology not fully defined!\n");
 			exit(1);
