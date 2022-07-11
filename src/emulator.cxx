@@ -77,8 +77,8 @@ void EuclidEmulator::read_in_ee2_data_file(){
 
 	// ==== LOAD EUCLIDEMULATOR2 DATA FILE ==== //
 	int fp = open(PATH_TO_EE2_DATA_FILE, O_RDONLY);
-	if(!fp) {
-		cerr << "Unable to open ./ee2_bindata.dat\n";
+	if(fp == -1) {
+		cerr << "Unable to open " << PATH_TO_EE2_DATA_FILE << std::endl;
         exit(1);
 	}
 
