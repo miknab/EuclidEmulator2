@@ -64,21 +64,18 @@ cdef extern from "emulator.h":
     cdef cppclass EuclidEmulator:
 
         double kvec[613];
-        double Bvec[101][613];
+        double Bvec[10*101][613];
 
         EuclidEmulator() except +
 
-        void compute_nlc(Cosmology csm, vector[double] redshift, int n_redshift);
-        void write_nlc2file(const string &filename, vector[double] zvec, int n_redshift);
-
+        void compute_nlc(Cosmology csm, vector[double] redshift);
 
 #Create new python classes for wrapping the c++ classes
 cdef class PyCosmology:
 
-     cdef Cosmology*cosm
+    cdef Cosmology* cosm
 
-
-     def __cinit__(self, double Omega_b , double Omega_m , double Sum_m_nu , double n_s , double h , double w_0 , double w_a , double A_s ):
+    def __cinit__(self, double Omega_b , double Omega_m , double Sum_m_nu , double n_s , double h , double w_0 , double w_a , double A_s ):
         """Cython signature: void Cosmology(double Omega_b, double Omega_m, double Sum_m_nu, double n_s, double h, double w_0, double w_a, double A_s)"""
         assert isinstance(Omega_b, float), 'arg Omega_b wrong type'
         assert isinstance(Omega_m, float), 'arg Omega_m wrong type'
@@ -91,44 +88,53 @@ cdef class PyCosmology:
 
         self.cosm =new Cosmology((<double>Omega_b), (<double>Omega_m), (<double>Sum_m_nu), (<double>n_s), (<double>h), (<double>w_0), (<double>w_a), (<double>A_s))
 
-     # Attribute access
-     @property
-     def Omega_nu_0(self):
+    #VM BEGINS
+    # ORIGINAL AUTHOR FORGOT TO CODE A DEALLOC
+    def __dealloc__(self):
+        if self.cosm is not NULL:
+            del self.cosm 
+    #VM ENDS
+    # Attribute access
+    @property
+    def Omega_nu_0(self):
         return self.cosm.Omega_nu_0
-     @Omega_nu_0.setter
-     def Omega_nu_0(self, Omega_nu_0):
+    @Omega_nu_0.setter
+    def Omega_nu_0(self, Omega_nu_0):
         self.cosm.Omega_nu_0 = Omega_nu_0
 
 
 cdef class PyEuclidEmulator:
 
-     cdef EuclidEmulator*ee2
+    cdef EuclidEmulator* ee2
 
-     def __cinit__(self):
+    def __cinit__(self):
         self.ee2 = new EuclidEmulator()
 
+    #VM BEGINS
+    # ORIGINAL AUTHOR FORGOT TO CODE A DEALLOC
+    def __dealloc__(self):
+        if self.ee2  is not NULL:
+            del self.ee2 
+    #VM ENDS
 
-     def compute_nlc(self,PyCosmology csm, redshift, n_redshift):
-          self.ee2.compute_nlc((<Cosmology *> csm.cosm)[0], redshift, n_redshift)
-
-     def write_nlc2file(self,filename, zvec, n_redshift):
-          self.ee2.write_nlc2file(<string>filename, zvec, n_redshift)
+    def compute_nlc(self, PyCosmology csm, redshift):
+        self.ee2.compute_nlc((<Cosmology *> csm.cosm)[0], redshift)
 
 
-
-     # Attribute access
-     @property
-     def kvec(self):
+    # Attribute access
+    @property
+    def kvec(self):
         return self.ee2.kvec
-     @kvec.setter
-     def kvec(self, kvec):
+    
+    @kvec.setter
+    def kvec(self, kvec):
         self.ee2.kvec = kvec
 
-     @property
-     def Bvec(self):
+    @property
+    def Bvec(self):
         return self.ee2.Bvec
-     @Bvec.setter
-     def Bvec(self, Bvec):
+    @Bvec.setter
+    def Bvec(self, Bvec):
         self.ee2.Bvec = Bvec
 
 
@@ -376,7 +382,7 @@ def get_boost(cosmo_par_in,redshifts,custom_kvec=None):
                       cosmo_par['A_s'])
 
     ee2=PyEuclidEmulator()
-    ee2.compute_nlc(cosmo,redshifts,len(redshifts))
+    ee2.compute_nlc(cosmo,redshifts)
 
     k=np.asarray(ee2.kvec)
     logboost=np.reshape(ee2.Bvec[0:len(redshifts)],(len(redshifts),len(k)))
@@ -414,40 +420,157 @@ def get_boost(cosmo_par_in,redshifts,custom_kvec=None):
             do_extrapolate_below = True
 
 
-    len_kvals = len(kvals)
-    len_redshifts = len(redshifts)
+    nk = len(kvals)
+    nz = len(redshifts)
+    logboost2d = logboost.reshape(nz, nk)
 
-
-    bvals = {}
-    for i in range(len_redshifts):
-        tmp = logboost[i]
-        if not(custom_kvec is None):
-            bvals[i] = 10.0**_CubicSpline(np.log10(kvals),
-                                          tmp.reshape(k_shape)
-                                          )(np.log10(custom_k_within_range))
-
-            #Extrapolate if necessary
-            if do_extrapolate_below:
-                # below the k_min of EuclidEmulator2, we are in the linear regime where
-                # the boost factor is unity by construction
-                b_extrap = np.ones_like(custom_k_below)
-                bvals[i]= np.concatenate((b_extrap, bvals[i]))
-
-            if do_extrapolate_above:
-                # We extrapolate by setting all b(k > k_max) to b(k_max)
-                b_extrap = bvals[i][-1] * np.ones_like(custom_k_above)
-                bvals[i] = np.concatenate((bvals[i], b_extrap))
-
-        else:
-            bvals[i] = 10.**tmp.reshape(k_shape)
-
-    if not(custom_kvec is None):       # This could probably be done cleaner!
+    if not do_extrapolate_below and not do_extrapolate_above and custom_kvec is not None:
+        from scipy.interpolate import interp1d
+        cs = interp1d(
+            np.log10(kvals),
+            logboost2d,
+            axis=1,
+            kind='cubic',
+            fill_value='extrapolate',
+            assume_sorted=True
+        )
+        bvals = 10**cs(np.log10(custom_k_within_range))
         kvals = custom_kvec
+    else:
+        bvals = {}
+        for i in range(nz):
+            tmp = logboost[i]
+            if not(custom_kvec is None):
+                bvals[i] = 10.0**_CubicSpline(np.log10(kvals),
+                                              tmp.reshape(k_shape)
+                                              )(np.log10(custom_k_within_range))
+
+                #Extrapolate if necessary
+                if do_extrapolate_below:
+                    # below the k_min of EuclidEmulator2, we are in the linear regime where
+                    # the boost factor is unity by construction
+                    b_extrap = np.ones_like(custom_k_below)
+                    bvals[i] = np.concatenate((b_extrap, bvals[i]))
+
+                if do_extrapolate_above:
+                    # We extrapolate by setting all b(k > k_max) to b(k_max)
+                    b_extrap = bvals[i][-1] * np.ones_like(custom_k_above)
+                    bvals[i] = np.concatenate((bvals[i], b_extrap))
+
+            else:
+                bvals[i] = 10.**tmp.reshape(k_shape)
+
+        if not(custom_kvec is None):       # This could probably be done cleaner!
+            kvals = custom_kvec
 
     return kvals,bvals
 
+def get_boost2(cosmo_par_in,redshifts,ee2,custom_kvec=None):
+
+    if isinstance(redshifts, (int, float)):
+        redshifts = np.asarray([redshifts])
+    else:
+        redshifts = np.asarray(redshifts)
+
+    for z in redshifts:
+        assert z <= 10.0 and z>=0.0, "EuclidEmulator2 allows only redshifts in the interval [0.0, 10.0]"
+
+    #Check if all variables are passed and convert to emu dict
+    cosmo_par=convert_to_emu(cosmo_par_in)
+    #Check if all parameters are in range
+    check_param_range(cosmo_par)
+
+    cosmo=PyCosmology(cosmo_par['Omega_b'],
+                      cosmo_par['Omega_m'],
+                      cosmo_par['m_ncdm'],
+                      cosmo_par['n_s'],
+                      cosmo_par['h'],
+                      cosmo_par['w0_fld'],
+                      cosmo_par['wa_fld'],
+                      cosmo_par['A_s'])
+
+    ee2.compute_nlc(cosmo,redshifts)
+
+    k=np.asarray(ee2.kvec)
+    logboost=np.reshape(ee2.Bvec[0:len(redshifts)],(len(redshifts),len(k)))
+
+    #Extrapolate for custom k-range
+    kvals = k
+    k_shape = kvals.shape
+
+    do_extrapolate_above = False
+    do_extrapolate_below = False
+    if not(custom_kvec is None):
+        upper_mask = custom_kvec < max(kvals)
+        lower_mask = custom_kvec > min(kvals)
+        mask = [u and l for (u,l) in zip(lower_mask, upper_mask)]
+        custom_k_within_range = custom_kvec[mask]
+        custom_k_below = custom_kvec[[not(l) for l in lower_mask]]
+        custom_k_above = custom_kvec[[not(u) for u in upper_mask]]
+
+        if any(custom_kvec > max(kvals)):
+            wrn_message = ("Warning:\nEuclidEmulator2 emulates the non-linear correction in \n"
+                           "the interval [8.73e-3 h/Mpc, 9.41h/Mpc]. You are \n"
+                           "requesting k modes beyond k_max = 9.41h/Mpc. \n"
+                           "Higher k modes constantly extrapolated.")
+
+            print(wrn_message)
+            do_extrapolate_above = True
+
+        if any(custom_kvec < min(kvals)):
+            wrn_message = ("Warning:\nEuclidEmulator2 emulates the non-linear correction in \n"
+                           "the interval [8.73e-3 h/Mpc, 9.41h/Mpc]. You are \n"
+                           "requesting k modes below k_min = 8.73e-3 h/Mpc. \n"
+                           "Lower k modes constantly extrapolated.")
+
+            print(wrn_message)
+            do_extrapolate_below = True
 
 
+    nk = len(kvals)
+    nz = len(redshifts)
+    logboost2d = logboost.reshape(nz, nk)
+
+    if not do_extrapolate_below and not do_extrapolate_above and custom_kvec is not None:
+        from scipy.interpolate import interp1d
+        cs = interp1d(
+            np.log10(kvals),
+            logboost2d,
+            axis=1,
+            kind='cubic',
+            fill_value='extrapolate',
+            assume_sorted=True
+        )
+        bvals = 10**cs(np.log10(custom_k_within_range))
+        kvals = custom_kvec
+    else:
+        bvals = {}
+        for i in range(nz):
+            tmp = logboost[i]
+            if not(custom_kvec is None):
+                bvals[i] = 10.0**_CubicSpline(np.log10(kvals),
+                                              tmp.reshape(k_shape)
+                                              )(np.log10(custom_k_within_range))
+
+                #Extrapolate if necessary
+                if do_extrapolate_below:
+                    # below the k_min of EuclidEmulator2, we are in the linear regime where
+                    # the boost factor is unity by construction
+                    b_extrap = np.ones_like(custom_k_below)
+                    bvals[i] = np.concatenate((b_extrap, bvals[i]))
+
+                if do_extrapolate_above:
+                    # We extrapolate by setting all b(k > k_max) to b(k_max)
+                    b_extrap = bvals[i][-1] * np.ones_like(custom_k_above)
+                    bvals[i] = np.concatenate((bvals[i], b_extrap))
+
+            else:
+                bvals[i] = 10.**tmp.reshape(k_shape)
+
+        if not(custom_kvec is None):       # This could probably be done cleaner!
+            kvals = custom_kvec
+
+    return kvals,bvals
 
 def get_plin(emu_pars_dict, custom_kvec, redshifts):
 

@@ -1,3 +1,44 @@
+## VM: Solved a difficult memory leak.
+
+What was the cause of the memory leak? A few reasons.
+
+(1)  The use of raw gsl pointers (not shared_ptr) + destructors (RAII) for memory management w/o creating adequate copy constructors that copied the data not just the pointer (problem on both cosmology and emulator classes). In this case, the members of the class cosmology copied the pointers as they were passed by value in an argument of a function on Python. Then, multiple destructors tried to free the same memory location (this double free causes an immediate segfault). This common issue is why C++ users should use smart_ptr and not RAII with raw ptr (unless they follow the so-called *rule of 5* that implies creating a copy constructor) - that was a topic on my computational physics C++ slides available on Cocoa repo. 
+
+(2) To avoid problem one, the author seemed to have explicitly commented on the C++ destructor for the Cosmology class. So, there was no RAII to delete the gsl_interp allocation.
+
+(3) Even with the C++ destructors coded, the author forgot to ask Python to call them in both Cosmology and Emulator wrappers (`cdef class PyCosmology` and `cdef class PyEuclidEmulator` in euclidmu2.pyx). How do you make Python call the C++ destructor? See below
+
+
+<img width="450" alt="Screenshot 2025-05-23 at 12 41 51 PM" src="https://github.com/user-attachments/assets/5a4e4502-e149-4b19-885f-cab9afa7d81c" />
+
+
+## VM: Optimization Implemented. 
+
+EE2 was quite slow and not threaded. That was slowing down chains a lot. Fixed. Test on 8 OpenMP cores (standard on Cocoa)
+
+<img width="1086" alt="Screenshot 2025-05-23 at 12 52 35 AM" src="https://github.com/user-attachments/assets/480b6007-4ebf-4cbd-be4c-26712b053f32" />
+
+## VM: Optimization (changes) Implemented Part 2.
+
+I made several changes to cosmo class (how a2t and neutrino were computed - same mathematical expressions - just different coding). I also changed integration routines and type of 2d interpolation. They affected the chi2 at the order of 0.005
+
+Also fixed code so that you can send more than 100 z's (important on Cosmolike likelihood)
+
+Finally, I vectorized the `bvals[i] = 10.0**_CubicSpline (...)` call on euclidemu2.pyx
+
+## VM: Optimization (changes) Implemented Part 3.
+
+I created the function `get_boost2(cosmo_par_in,redshifts,ee2,custom_kvec=None)` that gets the `Emulator` class as an argument so we dont need to read files at every point in the chain (the ee2 becomes a global pointer on the LSST/Roman cobaya likelihood class.
+
+After Part I,II, III (8 cores) - the difference between Halofit and EE2 is just 0.03-0.04 seconds on 8 cores
+
+<img width="1699" alt="Screenshot 2025-05-30 at 3 52 27 PM" src="https://github.com/user-attachments/assets/c4d2fef5-d9dc-447d-9366-9bb430574d40" />
+
+# VM: Suggestion (Python wrapper)
+
+Cython is such a difficult way to create Python Wrappers. `euclidemu2.cpp` is really hard to read/parse/understand. I suggest anyone in the future to use Pybind11 (which is the way Cocoa implements the C++ <-> Python interface).
+
+
 # EuclidEmulator2 (version 1.0.1)
 This repository contains the source code of EuclidEmulator2, a fast and accurate tool to estimate the non-linear correction to the matter power spectrum.
 In contrast to its predecessor EuclidEmulator, EuclidEmulator2 allows for 8-parameter cosmological models including massive neutrinos (assuming a degenerate hierarchy) and dynamical dark energy. EuclidEmulator2 is written in C++. For more information on EuclidEmulator please visit https://github.com/miknab/EuclidEmulator.
